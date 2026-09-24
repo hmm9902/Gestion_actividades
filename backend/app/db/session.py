@@ -53,6 +53,8 @@ class DatabaseManager:
 
         self._current_provider = provider
         self._sessionmaker = sessionmaker(autocommit=False, autoflush=False, bind=self._engine)
+        global engine
+        engine = self._engine
 
     def _create_local_engine(self) -> Engine:
         eng = create_engine(

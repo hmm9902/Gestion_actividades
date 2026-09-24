@@ -8,8 +8,8 @@ class Settings(BaseSettings):
     APP_NAME: str = "GestorActividadesFCD"
     APP_SECRET_KEY: str = "dev_secret_key_change_in_production_839217391"
     
-    # Proveedor de base de datos activo ("LOCAL" o "TURSO")
-    ACTIVE_DB_PROVIDER: str = "LOCAL"
+    # Proveedor de base de datos activo ("LOCAL" o "TURSO"). Por defecto TURSO cuando está configurado.
+    ACTIVE_DB_PROVIDER: str = "TURSO"
     LOCAL_SQLITE_URL: str = "sqlite:///./gestor_actividades.db"
     
     # Credenciales separadas para Turso
@@ -66,14 +66,10 @@ def get_provider_config_path() -> str:
 def get_effective_provider() -> str:
     """
     Obtiene el proveedor efectivo respetando:
-    1. Variable de entorno ACTIVE_DB_PROVIDER (ideal para Render / Cloud)
-    2. Archivo local .active_db_provider (ideal para desarrollo local)
-    3. Valor predeterminado en settings
+    1. Archivo local .active_db_provider (elección explícita del usuario en el sistema)
+    2. Variable de entorno ACTIVE_DB_PROVIDER (ideal para Render / Cloud)
+    3. Valor predeterminado en settings (TURSO si tiene credenciales, o LOCAL)
     """
-    env_prov = os.getenv("ACTIVE_DB_PROVIDER")
-    if env_prov and env_prov.upper() in ("LOCAL", "TURSO"):
-        return env_prov.upper()
-        
     cfg_path = get_provider_config_path()
     if os.path.exists(cfg_path):
         try:
@@ -84,8 +80,14 @@ def get_effective_provider() -> str:
                     return p
         except Exception:
             pass
-            
-    return settings.ACTIVE_DB_PROVIDER.upper()
+
+    env_prov = os.getenv("ACTIVE_DB_PROVIDER")
+    if env_prov and env_prov.upper() in ("LOCAL", "TURSO"):
+        return env_prov.upper()
+        
+    if settings.TURSO_DATABASE_URL and settings.TURSO_AUTH_TOKEN:
+        return "TURSO"
+    return "LOCAL"
 
 def set_effective_provider(provider: str) -> None:
     """

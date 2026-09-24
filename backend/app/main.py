@@ -3,24 +3,25 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from app.core.config import settings
-from app.db.session import engine, Base
+from app.db.session import db_manager, Base
 from app.api.v1 import api_router
-from app.scripts.bootstrap import seed_data
+from app.scripts.bootstrap import ensure_system_bootstrap
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Crear tablas en BD al iniciar si no existen
-    Base.metadata.create_all(bind=engine)
+    # Crear tablas en BD al iniciar si no existen usando el motor dinámico activo (TURSO o LOCAL)
+    Base.metadata.create_all(bind=db_manager.engine)
     # Migración liviana para SQLite si ya existía la tabla ACTIVIDADES sin NOMBRE_PROYECTO
     try:
         from sqlalchemy import text
-        with engine.connect() as conn:
+        with db_manager.engine.connect() as conn:
             conn.execute(text("ALTER TABLE ACTIVIDADES ADD COLUMN NOMBRE_PROYECTO VARCHAR(150)"))
             conn.commit()
     except Exception:
         pass
-    # Ejecutar seed de perfiles y ADMIN inicial
-    seed_data()
+    # Inicialización esencial del sistema (roles y usuario admin si no existen).
+    # NUNCA inserta ni sobreescribe actividades, grupos ni datos existentes en Turso o local.
+    ensure_system_bootstrap()
     yield
 
 app = FastAPI(

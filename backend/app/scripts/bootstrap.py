@@ -7,7 +7,16 @@ from app.models.entities import (
 from app.core.security import hash_password
 from app.core.config import settings
 
-def seed_data(db=None):
+def ensure_system_bootstrap(db=None):
+    """
+    Inicializa ÚNICAMENTE los elementos requeridos del sistema:
+    1. Catálogo de roles/perfiles (ADMIN, SWE, DESARROLLADOR, QA, INTEGRADOR) si no existen.
+    2. Cuenta inicial de ADMIN si no existe en la base de datos.
+    
+    REGLA FUNDAMENTAL:
+    NUNCA inserta, sobreescribe ni restaura actividades, grupos ni datos demo.
+    Cualquier cambio realizado en Turso o local permanece intacto sin restaurar nada.
+    """
     close_on_finish = False
     if db is None:
         db = SessionLocal()
@@ -20,7 +29,7 @@ def seed_data(db=None):
                 db.add(Perfil(DESCRIPCION=nombre))
         db.commit()
 
-        # 2. Bootstrap ADMIN inicial
+        # 2. Bootstrap ADMIN inicial si no existe
         admin_reg_cod = settings.BOOTSTRAP_ADMIN_USER.upper()
         admin_reg = db.query(Registro).filter(Registro.REGISTRO == admin_reg_cod).first()
         if not admin_reg:
@@ -50,6 +59,21 @@ def seed_data(db=None):
             )
             db.add(admin_user)
             db.commit()
+    finally:
+        if close_on_finish:
+            db.close()
+
+def seed_data(db=None):
+    """
+    Función de seed completa para pruebas locales aisladas o tests unitarios.
+    NO se ejecuta en el inicio de la aplicación en producción.
+    """
+    ensure_system_bootstrap(db)
+    close_on_finish = False
+    if db is None:
+        db = SessionLocal()
+        close_on_finish = True
+    try:
 
         # 3. Datos de prueba: SWE y Desarrolladores
         colaboradores = [
