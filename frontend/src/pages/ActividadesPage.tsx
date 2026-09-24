@@ -9,6 +9,8 @@ import { TablaActividades } from '../components/tabla/TablaActividades';
 import { ModalDetalleActividad } from '../components/kanban/ModalDetalleActividad';
 import { ModalCambioEstado } from '../components/kanban/ModalCambioEstado';
 import { ModalNuevaActividad } from '../components/kanban/ModalNuevaActividad';
+import { ModalExportarExcel } from '../components/kanban/ModalExportarExcel';
+import { OfficeExcelIcon } from '../components/common/OfficeExcelIcon';
 
 export const ActividadesPage: React.FC = () => {
   const { usuario } = useAuth();
@@ -46,6 +48,7 @@ export const ActividadesPage: React.FC = () => {
   const [codigoDetalle, setCodigoDetalle] = useState<string | null>(null);
   const [actividadParaCambioEstado, setActividadParaCambioEstado] = useState<Actividad | null>(null);
   const [mostrarModalNueva, setMostrarModalNueva] = useState<boolean>(false);
+  const [mostrarModalExportar, setMostrarModalExportar] = useState<boolean>(false);
 
   const cargarDatos = async () => {
     try {
@@ -225,6 +228,23 @@ export const ActividadesPage: React.FC = () => {
             Actualizar
           </button>
 
+          {/* Botón Exportar a Excel */}
+          <button
+            type="button"
+            className="btn btn-secundario"
+            onClick={() => setMostrarModalExportar(true)}
+            title="Exportar actividades a archivo Excel (.xlsx)"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontWeight: 600,
+            }}
+          >
+            <OfficeExcelIcon size={18} />
+            <span>Exportar</span>
+          </button>
+
           {/* Botón Nueva Actividad */}
           {puedeCrear && (
             <button
@@ -303,6 +323,15 @@ export const ActividadesPage: React.FC = () => {
           grupoPreseleccionado={grupoSeleccionado}
           onCerrar={() => setMostrarModalNueva(false)}
           onCreado={cargarDatos}
+        />
+      )}
+
+      {/* Modal de Exportación a Excel */}
+      {mostrarModalExportar && (
+        <ModalExportarExcel
+          actividades={actividades}
+          grupos={grupos}
+          onCerrar={() => setMostrarModalExportar(false)}
         />
       )}
 
