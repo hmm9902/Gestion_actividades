@@ -5,6 +5,8 @@ import { apiRequest } from '../lib/api';
 import { useAuth } from '../hooks/useAuth';
 import { useNotificacion } from '../context/NotificacionContext';
 import { ModalConfirmacionEliminar } from '../components/common/ModalConfirmacionEliminar';
+import { ModalExportarRegistros } from '../components/common/ModalExportarRegistros';
+import { OfficeExcelIcon } from '../components/common/OfficeExcelIcon';
 
 export const RegistrosPage: React.FC = () => {
   const { usuario } = useAuth();
@@ -53,6 +55,9 @@ export const RegistrosPage: React.FC = () => {
   const [editPasswordDomain, setEditPasswordDomain] = useState('');
   const [errorEditar, setErrorEditar] = useState<string | null>(null);
   const [guardandoEditar, setGuardandoEditar] = useState(false);
+
+  // Modal Exportar Excel
+  const [mostrarModalExportar, setMostrarModalExportar] = useState(false);
 
   const handleAbrirEditar = (r: RegistroColaborador) => {
     if (!puedeCrear) {
@@ -253,6 +258,23 @@ export const RegistrosPage: React.FC = () => {
           >
             <RefreshCw size={16} className={cargando ? 'animate-spin' : ''} />
             Actualizar
+          </button>
+
+          {/* Botón Exportar a Excel */}
+          <button
+            type="button"
+            className="btn btn-secundario"
+            onClick={() => setMostrarModalExportar(true)}
+            title="Exportar colaboradores a archivo Excel (.xlsx)"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontWeight: 600,
+            }}
+          >
+            <OfficeExcelIcon size={18} />
+            <span>Exportar</span>
           </button>
 
           {puedeCrear && (
@@ -833,6 +855,14 @@ export const RegistrosPage: React.FC = () => {
         onConfirmar={confirmarEliminarRegistro}
         onCerrar={() => setRegistroParaEliminar(null)}
       />
+
+      {/* Modal Exportación a Excel */}
+      {mostrarModalExportar && (
+        <ModalExportarRegistros
+          registros={registros}
+          onCerrar={() => setMostrarModalExportar(false)}
+        />
+      )}
 
     </div>
   );

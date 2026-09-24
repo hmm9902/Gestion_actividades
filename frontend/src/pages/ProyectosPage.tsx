@@ -5,6 +5,8 @@ import { apiRequest } from '../lib/api';
 import { useAuth } from '../hooks/useAuth';
 import { useNotificacion } from '../context/NotificacionContext';
 import { ModalConfirmacionEliminar } from '../components/common/ModalConfirmacionEliminar';
+import { ModalExportarProyectos } from '../components/common/ModalExportarProyectos';
+import { OfficeExcelIcon } from '../components/common/OfficeExcelIcon';
 
 export const ProyectosPage: React.FC = () => {
   const { usuario } = useAuth();
@@ -54,6 +56,9 @@ export const ProyectosPage: React.FC = () => {
   // Modal Eliminación
   const [proyectoParaEliminar, setProyectoParaEliminar] = useState<Proyecto | null>(null);
   const [eliminandoProyecto, setEliminandoProyecto] = useState(false);
+
+  // Modal Exportar Excel
+  const [mostrarModalExportar, setMostrarModalExportar] = useState(false);
 
   const cargarProyectos = async () => {
     try {
@@ -277,6 +282,23 @@ export const ProyectosPage: React.FC = () => {
           >
             <RefreshCw size={16} className={cargando ? 'animate-spin' : ''} />
             Actualizar
+          </button>
+
+          {/* Botón Exportar a Excel */}
+          <button
+            type="button"
+            className="btn btn-secundario"
+            onClick={() => setMostrarModalExportar(true)}
+            title="Exportar proyectos a archivo Excel (.xlsx)"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontWeight: 600,
+            }}
+          >
+            <OfficeExcelIcon size={18} />
+            <span>Exportar</span>
           </button>
 
           <button
@@ -874,6 +896,14 @@ export const ProyectosPage: React.FC = () => {
         onConfirmar={confirmarEliminar}
         onCerrar={() => setProyectoParaEliminar(null)}
       />
+
+      {/* Modal Exportación a Excel */}
+      {mostrarModalExportar && (
+        <ModalExportarProyectos
+          proyectos={proyectos}
+          onCerrar={() => setMostrarModalExportar(false)}
+        />
+      )}
 
     </div>
   );
