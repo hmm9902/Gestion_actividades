@@ -1,0 +1,156 @@
+/* variables.css: Sistema de diseño multitipo con soporte para temas Normal, Dark y Dracula */
+
+:root,
+[data-theme="normal"] {
+  /* Paleta primaria verde financiera / esmeralda moderna */
+  --color-primario: #00875A;
+  --color-primario-hover: #006644;
+  --color-primario-suave: #E3FCEF;
+  --color-primario-borde: #ABF5D1;
+  --color-primario-gradiente: linear-gradient(135deg, #00A868 0%, #00875A 100%);
+  --color-primario-sombra: rgba(0, 135, 90, 0.2);
+
+  /* Superficies y fondos */
+  --color-fondo: #F8FAFC;
+  --color-superficie: #FFFFFF;
+  --color-superficie-elevada: #FFFFFF;
+  --color-superficie-hover: #F1F5F9;
+  --color-superficie-activa: #E2E8F0;
+
+  /* Bordes */
+  --color-borde: #E2E8F0;
+  --color-borde-suave: #F1F5F9;
+  --color-borde-foco: #00875A;
+
+  /* Tipografía y textos */
+  --color-texto-principal: #0F172A;
+  --color-texto-secundario: #475569;
+  --color-texto-terciario: #94A3B8;
+  --color-texto-inverso: #FFFFFF;
+
+  /* Sombras */
+  --sombra-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --sombra-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --sombra-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+  --sombra-modal: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+  
+  /* Sidebar */
+  --sidebar-fondo: #FFFFFF;
+  --sidebar-item-hover: #F1F5F9;
+  --sidebar-item-activo: #E3FCEF;
+  --sidebar-item-activo-texto: #006644;
+}
+
+[data-theme="dark"] {
+  --color-primario: #10B981;
+  --color-primario-hover: #059669;
+  --color-primario-suave: rgba(16, 185, 129, 0.15);
+  --color-primario-borde: rgba(16, 185, 129, 0.3);
+  --color-primario-gradiente: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  --color-primario-sombra: rgba(16, 185, 129, 0.3);
+
+  --color-fondo: #0B1120;
+  --color-superficie: #1E293B;
+  --color-superficie-elevada: #334155;
+  --color-superficie-hover: #2D3D54;
+  --color-superficie-activa: #3E516D;
+
+  --color-borde: #334155;
+  --color-borde-suave: #1E293B;
+  --color-borde-foco: #10B981;
+
+  --color-texto-principal: #F8FAFC;
+  --color-texto-secundario: #94A3B8;
+  --color-texto-terciario: #64748B;
+  --color-texto-inverso: #0B1120;
+
+  --sombra-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --sombra-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  --sombra-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+  --sombra-modal: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+
+  --sidebar-fondo: #1E293B;
+  --sidebar-item-hover: #334155;
+  --sidebar-item-activo: rgba(16, 185, 129, 0.2);
+  --sidebar-item-activo-texto: #34D399;
+}
+
+[data-theme="dracula"] {
+  --color-primario: #BD93F9;
+  --color-primario-hover: #A370F7;
+  --color-primario-suave: rgba(189, 147, 249, 0.18);
+  --color-primario-borde: rgba(189, 147, 249, 0.35);
+  --color-primario-gradiente: linear-gradient(135deg, #BD93F9 0%, #FF79C6 100%);
+  --color-primario-sombra: rgba(189, 147, 249, 0.3);
+
+  --color-fondo: #282A36;
+  --color-superficie: #343746;
+  --color-superficie-elevada: #44475A;
+  --color-superficie-hover: #44475A;
+  --color-superficie-activa: #6272A4;
+
+  --color-borde: #44475A;
+  --color-borde-suave: #343746;
+  --color-borde-foco: #BD93F9;
+
+  --color-texto-principal: #F8F8F2;
+  --color-texto-secundario: #B0B5C9;
+  --color-texto-terciario: #6272A4;
+  --color-texto-inverso: #282A36;
+
+  --sombra-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+  --sombra-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+  --sombra-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6);
+  --sombra-modal: 0 25px 50px -12px rgba(0, 0, 0, 0.85);
+
+  --sidebar-fondo: #21222C;
+  --sidebar-item-hover: #44475A;
+  --sidebar-item-activo: rgba(189, 147, 249, 0.22);
+  --sidebar-item-activo-texto: #FF79C6;
+}
+
+/* Colores de estados funcionales específicos */
+:root {
+  --color-estado-registrado-fondo: #FEF9C3;
+  --color-estado-registrado-borde: #FDE047;
+  --color-estado-registrado-texto: #854D0E;
+
+  --color-estado-desarrollo-fondo: #FFEDD5;
+  --color-estado-desarrollo-borde: #FDBA74;
+  --color-estado-desarrollo-texto: #9A3412;
+
+  --color-estado-certificacion-fondo: #E0F2FE;
+  --color-estado-certificacion-borde: #BAE6FD;
+  --color-estado-certificacion-texto: #0369A1;
+
+  --color-estado-finalizado-fondo: #F1F5F9;
+  --color-estado-finalizado-borde: #CBD5E1;
+  --color-estado-finalizado-texto: #334155;
+
+  --color-estado-gestion-prd-fondo: #DCFCE7;
+  --color-estado-gestion-prd-borde: #86EFAC;
+  --color-estado-gestion-prd-texto: #166534;
+
+  --color-estado-en-prd-fondo: #00875A;
+  --color-estado-en-prd-borde: #006644;
+  --color-estado-en-prd-texto: #FFFFFF;
+
+  --color-estado-impedimento-fondo: #FEE2E2;
+  --color-estado-impedimento-borde: #FCA5A5;
+  --color-estado-impedimento-texto: #991B1B;
+
+  /* Tipografía y medidas */
+  --fuente-principal: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --ancho-sidebar: 260px;
+  --ancho-sidebar-colapsado: 72px;
+  --altura-header: 68px;
+  
+  --radio-sm: 6px;
+  --radio-md: 10px;
+  --radio-lg: 14px;
+  --radio-xl: 20px;
+  --radio-pildora: 9999px;
+
+  --transicion-rapida: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transicion-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+}

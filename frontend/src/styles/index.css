@@ -1,0 +1,339 @@
+@import './variables.css';
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--fuente-principal);
+  background-color: var(--color-fondo);
+  color: var(--color-texto-principal);
+  min-height: 100vh;
+  transition: background-color var(--transicion-normal), color var(--transicion-normal);
+  line-height: 1.5;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-fondo);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-borde);
+  border-radius: var(--radio-pildora);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-texto-terciario);
+}
+
+/* Botones */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  padding: 8px 16px;
+  border-radius: var(--radio-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all var(--transicion-rapida);
+  user-select: none;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primario {
+  background: var(--color-primario);
+  color: #FFFFFF;
+}
+
+.btn-primario:hover:not(:disabled) {
+  background: var(--color-primario-hover);
+  box-shadow: 0 4px 12px var(--color-primario-sombra);
+}
+
+.btn-secundario {
+  background: var(--color-superficie);
+  color: var(--color-texto-principal);
+  border-color: var(--color-borde);
+}
+
+.btn-secundario:hover:not(:disabled) {
+  background: var(--color-superficie-hover);
+  border-color: var(--color-texto-terciario);
+}
+
+.btn-peligro {
+  background: #EF4444;
+  color: #FFFFFF;
+}
+
+.btn-peligro:hover:not(:disabled) {
+  background: #DC2626;
+}
+
+.btn-sm {
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  border-radius: var(--radio-sm);
+}
+
+/* Badges de Estado */
+.badge-estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radio-pildora);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  border-width: 1px;
+  border-style: solid;
+}
+
+.badge-registrado {
+  background-color: var(--color-estado-registrado-fondo);
+  border-color: var(--color-estado-registrado-borde);
+  color: var(--color-estado-registrado-texto);
+}
+
+.badge-desarrollo {
+  background-color: var(--color-estado-desarrollo-fondo);
+  border-color: var(--color-estado-desarrollo-borde);
+  color: var(--color-estado-desarrollo-texto);
+}
+
+.badge-certificacion {
+  background-color: var(--color-estado-certificacion-fondo);
+  border-color: var(--color-estado-certificacion-borde);
+  color: var(--color-estado-certificacion-texto);
+}
+
+.badge-finalizado {
+  background-color: var(--color-estado-finalizado-fondo);
+  border-color: var(--color-estado-finalizado-borde);
+  color: var(--color-estado-finalizado-texto);
+}
+
+.badge-gestion-prd {
+  background-color: var(--color-estado-gestion-prd-fondo);
+  border-color: var(--color-estado-gestion-prd-borde);
+  color: var(--color-estado-gestion-prd-texto);
+}
+
+.badge-en-prd {
+  background-color: var(--color-estado-en-prd-fondo);
+  border-color: var(--color-estado-en-prd-borde);
+  color: var(--color-estado-en-prd-texto);
+}
+
+.badge-impedimento {
+  background-color: var(--color-estado-impedimento-fondo);
+  border-color: var(--color-estado-impedimento-borde);
+  color: var(--color-estado-impedimento-texto);
+}
+
+/* Formularios y Inputs */
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  padding: 9px 13px;
+  border-radius: var(--radio-md);
+  border: 1px solid var(--color-borde);
+  background-color: var(--color-superficie);
+  color: var(--color-texto-principal);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color var(--transicion-rapida), box-shadow var(--transicion-rapida);
+}
+
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  border-color: var(--color-borde-foco);
+  box-shadow: 0 0 0 3px var(--color-primario-suave);
+}
+
+.form-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-texto-secundario);
+  margin-bottom: 6px;
+}
+
+/* Modales */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-content {
+  background-color: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-modal);
+  width: 100%;
+  max-width: 680px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleUp {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.toast {
+  animation: slideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Filas de tablas interactivas con sombreado yellow light al pasar el mouse */
+.fila-interactiva {
+  cursor: pointer;
+  transition: background-color 0.18s ease-in-out;
+}
+
+.fila-interactiva:hover,
+.fila-interactiva:focus,
+.fila-interactiva:focus-within {
+  background-color: #FEF9C3 !important; /* Yellow light */
+  outline: none;
+}
+
+/* Asegurar contraste de texto de la fila en modo dark/dracula cuando se activa el hover amarillo */
+[data-theme="dark"] .fila-interactiva:hover td,
+[data-theme="dark"] .fila-interactiva:hover td div,
+[data-theme="dark"] .fila-interactiva:hover td span:not([class*="badge-"]),
+[data-theme="dark"] .fila-interactiva:focus td,
+[data-theme="dracula"] .fila-interactiva:hover td,
+[data-theme="dracula"] .fila-interactiva:hover td div,
+[data-theme="dracula"] .fila-interactiva:hover td span:not([class*="badge-"]),
+[data-theme="dracula"] .fila-interactiva:focus td {
+  color: #0F172A !important;
+}
+
+/* Scrollbars táctiles, nítidos y siempre visibles para el tablero Kanban */
+.kanban-columnas-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-primario) var(--color-superficie);
+}
+
+.kanban-columnas-scroll::-webkit-scrollbar {
+  height: 11px;
+}
+
+.kanban-columnas-scroll::-webkit-scrollbar-track {
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-pildora);
+}
+
+.kanban-columnas-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-primario);
+  border-radius: var(--radio-pildora);
+  border: 2px solid var(--color-superficie);
+}
+
+.kanban-columnas-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primario-hover);
+}
+
+.kanban-tarjetas-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-borde) transparent;
+}
+
+.kanban-tarjetas-scroll::-webkit-scrollbar {
+  width: 7px;
+}
+
+.kanban-tarjetas-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.kanban-tarjetas-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-borde);
+  border-radius: var(--radio-pildora);
+}
+
+.kanban-tarjetas-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--color-texto-terciario);
+}
+
+/* Botón de cierre X rojo elegante para ventanas modales */
+.btn-cerrar-modal {
+  background: #DC2626;
+  background-image: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+  border: 1px solid #B91C1C;
+  cursor: pointer;
+  color: #FFFFFF !important;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.28);
+  transition: all var(--transicion-rapida);
+  flex-shrink: 0;
+}
+
+.btn-cerrar-modal svg {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+}
+
+.btn-cerrar-modal:hover {
+  background: #B91C1C;
+  background-image: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
+  border-color: #991B1B;
+  color: #FFFFFF !important;
+  transform: translateY(-1px) scale(1.04);
+  box-shadow: 0 4px 8px rgba(220, 38, 38, 0.4);
+}
+
+.btn-cerrar-modal:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 1px 3px rgba(220, 38, 38, 0.25);
+}
+

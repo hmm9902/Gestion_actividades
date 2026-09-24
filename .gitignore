@@ -1,0 +1,50 @@
+# Python
+.venv/
+backend/.venv/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+**/.pytest_cache/
+
+# Node / Frontend
+frontend/node_modules/
+frontend/dist/
+*.local
+
+# Database & Backups
+*.db
+*.db*
+*.sqlite3
+*.sqlite
+*.bak
+*.bak*
+backups/
+**/backups/
+*.backup_*
+test_temp.db
+
+# Provider local override (sin secretos, pero específico del entorno local)
+backend/.active_db_provider
+.active_db_provider
+
+# Environment & Secrets
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+
+# IDE & Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs & OS
+*.log
+**/*.log
+Thumbs.db
+.DS_Store
