@@ -199,10 +199,10 @@ class MigrationService:
         Respeta dependencias de claves foráneas e integridad referencial.
         """
         table_order = [
-            'PERFIL', 'PROYECTOS', 'REGISTRO', 'ASIGNACION_GRUPOS',
+            'PERFIL', 'PROYECTOS', 'APLICACIONES', 'REGISTRO', 'ASIGNACION_GRUPOS',
             'USUARIOS', 'ASIGNACION_DET_GRUPOS', 'ALERTAS_RETIRADAS',
             'AUDITORIA', 'ACTIVIDADES', 'ASIGNADO_DET_REGISTRO',
-            'ESTADO_DET_ACTIVIDADES', 'SEGUIMIENTO'
+            'ESTADO_DET_ACTIVIDADES', 'SEGUIMIENTO', 'PASES', 'TICKETS', 'INCIDENTES'
         ]
 
         # Validar si hay alguna tabla adicional no listada en el orden estándar
@@ -217,8 +217,9 @@ class MigrationService:
         }
 
         with httpx.Client(timeout=90.0) as client:
-            # 1. Limpieza preventiva en destino (drop tables en orden inverso)
-            drop_reqs = [{"type": "execute", "stmt": {"sql": f'DROP TABLE IF EXISTS "{t}"'}} for t in reversed(table_order)]
+            # 1. Limpieza preventiva en destino (drop tables en orden inverso con FKs desactivadas temporalmente)
+            drop_reqs = [{"type": "execute", "stmt": {"sql": "PRAGMA foreign_keys = OFF"}}]
+            drop_reqs.extend([{"type": "execute", "stmt": {"sql": f'DROP TABLE IF EXISTS "{t}"'}} for t in reversed(table_order)])
             drop_reqs.append({"type": "close"})
             client.post(pipeline_url, headers=headers, json={"requests": drop_reqs})
 
@@ -231,6 +232,9 @@ class MigrationService:
             r_create = client.post(pipeline_url, headers=headers, json={"requests": create_reqs})
             if r_create.status_code != 200:
                 raise Exception(f"Fallo al crear tablas en Turso: {r_create.text}")
+            for item in r_create.json().get("results", []):
+                if item.get("type") == "error":
+                    raise Exception(f"Error creando tabla en Turso: {item.get('error', {}).get('message')}")
 
             # 3. Creación de índices (crucial para que las FKs únicas sean válidas antes de insertar datos)
             indexes = local_schema.get("indexes", [])
@@ -318,7 +322,7 @@ class MigrationService:
 
         tables_verification = []
         differences = []
-        critical_tables = ["PERFIL", "REGISTRO", "USUARIOS", "ACTIVIDADES", "PROYECTOS"]
+        critical_tables = ["PERFIL", "REGISTRO", "USUARIOS", "ACTIVIDADES", "PROYECTOS", "APLICACIONES", "PASES", "TICKETS", "INCIDENTES"]
         hashes_match = True
 
         conn = sqlite3.connect(self.local_db_path)
@@ -345,9 +349,14 @@ class MigrationService:
                 res_rows = r.json().get("results", [{}])[0].get("response", {}).get("result", {}).get("rows", [])
                 turso_count = int(res_rows[0][0]["value"]) if res_rows else 0
 
-                matched = (local_count == turso_count)
-                if not matched:
-                    differences.append(f"Discrepancia en {t_name}: Local={local_count}, Turso={turso_count}")
+                if t_name == "AUDITORIA":
+                    matched = (turso_count >= local_count)
+                    if not matched:
+                        differences.append(f"Discrepancia en AUDITORIA: Local={local_count}, Turso={turso_count} (Turso tiene menos registros que el origen)")
+                else:
+                    matched = (local_count == turso_count)
+                    if not matched:
+                        differences.append(f"Discrepancia en {t_name}: Local={local_count}, Turso={turso_count}")
 
                 # Si es tabla crítica, calcular hash SHA-256 comparativo
                 hash_local = None
@@ -452,7 +461,7 @@ class MigrationService:
                     headers=headers,
                     json={
                         "requests": [
-                            {"type": "execute", "stmt": {"sql": "SELECT REGISTRO, PASSWORD_HASH, ESTADO FROM USUARIOS WHERE REGISTRO='ADMIN'"}},
+                            {"type": "execute", "stmt": {"sql": "SELECT REGISTRO, PASSWORD, ESTADO FROM USUARIOS WHERE REGISTRO='ADMIN'"}},
                             {"type": "close"}
                         ]
                     }
@@ -492,6 +501,10 @@ class MigrationService:
                 ("Módulo Asignaciones de Actividades", "SELECT count(*) FROM ASIGNADO_DET_REGISTRO"),
                 ("Módulo Seguimiento", "SELECT count(*) FROM SEGUIMIENTO"),
                 ("Módulo Catálogo de Proyectos", "SELECT count(*) FROM PROYECTOS"),
+                ("Módulo Catálogo de Aplicaciones", "SELECT count(*) FROM APLICACIONES"),
+                ("Módulo Catálogo de Pases", "SELECT count(*) FROM PASES"),
+                ("Módulo Tickets", "SELECT count(*) FROM TICKETS"),
+                ("Módulo Incidentes", "SELECT count(*) FROM INCIDENTES"),
                 ("Módulo Auditoría", "SELECT count(*) FROM AUDITORIA"),
                 ("Módulo Tablero Kanban (Agrupación por Estados)", "SELECT ESTADO, count(*) FROM ACTIVIDADES GROUP BY ESTADO")
             ]

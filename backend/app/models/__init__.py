@@ -9,7 +9,8 @@ from app.models.entities import (
     EstadoDetActividades,
     Seguimiento,
     Auditoria,
-    AlertaRetirada
+    AlertaRetirada,
+    Pase
 )
 
 __all__ = [
@@ -23,5 +24,6 @@ __all__ = [
     "EstadoDetActividades",
     "Seguimiento",
     "Auditoria",
-    "AlertaRetirada"
+    "AlertaRetirada",
+    "Pase"
 ]

@@ -87,6 +87,15 @@ def seed_data(db=None):
                 "password": "Password123*"
             },
             {
+                "dni": "45678902",
+                "nombres": "HENRY MIRAMIRA",
+                "registro": "S38454",
+                "correo": "hmiramira@empresa.com",
+                "perfil": "SWE",
+                "fecha_expiracion": date.today() + timedelta(days=90),
+                "password": "Password123*"
+            },
+            {
                 "dni": "71234567",
                 "nombres": "PIERO YALAN",
                 "registro": "X15400",

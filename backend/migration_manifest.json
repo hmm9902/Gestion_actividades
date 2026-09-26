@@ -1,0 +1,238 @@
+{
+  "timestamp": "2026-09-26T00:28:01.115823",
+  "user": "ADMIN",
+  "database_name": "gestor-actividades",
+  "status": "SUCCESS",
+  "backup_path": "D:/Proyectos_Anti/backend\\gestor_actividades.db.backup_20260926_002801",
+  "connection_status": "OK",
+  "db_creation_status": "OK",
+  "migration_status": "OK",
+  "validation_status": "OK",
+  "tests_status": "OK",
+  "local_schema_summary": {
+    "tables_count": 16,
+    "indexes_count": 36,
+    "triggers_count": 0,
+    "views_count": 0
+  },
+  "verification": {
+    "all_matched": true,
+    "tables_verification": [
+      {
+        "table": "PERFIL",
+        "local_rows": 5,
+        "turso_rows": 5,
+        "count_match": true,
+        "hash_verified": true
+      },
+      {
+        "table": "AUDITORIA",
+        "local_rows": 232,
+        "turso_rows": 232,
+        "count_match": true,
+        "hash_verified": null
+      },
+      {
+        "table": "REGISTRO",
+        "local_rows": 7,
+        "turso_rows": 7,
+        "count_match": true,
+        "hash_verified": true
+      },
+      {
+        "table": "USUARIOS",
+        "local_rows": 7,
+        "turso_rows": 7,
+        "count_match": true,
+        "hash_verified": true
+      },
+      {
+        "table": "ASIGNACION_GRUPOS",
+        "local_rows": 2,
+        "turso_rows": 2,
+        "count_match": true,
+        "hash_verified": null
+      },
+      {
+        "table": "ALERTAS_RETIRADAS",
+        "local_rows": 0,
+        "turso_rows": 0,
+        "count_match": true,
+        "hash_verified": null
+      },
+      {
+        "table": "ASIGNACION_DET_GRUPOS",
+        "local_rows": 7,
+        "turso_rows": 7,
+        "count_match": true,
+        "hash_verified": null
+      },
+      {
+        "table": "ACTIVIDADES",
+        "local_rows": 2,
+        "turso_rows": 2,
+        "count_match": true,
+        "hash_verified": true
+      },
+      {
+        "table": "ASIGNADO_DET_REGISTRO",
+        "local_rows": 2,
+        "turso_rows": 2,
+        "count_match": true,
+        "hash_verified": null
+      },
+      {
+        "table": "ESTADO_DET_ACTIVIDADES",
+        "local_rows": 1,
+        "turso_rows": 1,
+        "count_match": true,
+        "hash_verified": null
+      },
+      {
+        "table": "SEGUIMIENTO",
+        "local_rows": 0,
+        "turso_rows": 0,
+        "count_match": true,
+        "hash_verified": null
+      },
+      {
+        "table": "PROYECTOS",
+        "local_rows": 9,
+        "turso_rows": 9,
+        "count_match": true,
+        "hash_verified": true
+      },
+      {
+        "table": "APLICACIONES",
+        "local_rows": 4,
+        "turso_rows": 4,
+        "count_match": true,
+        "hash_verified": true
+      },
+      {
+        "table": "PASES",
+        "local_rows": 17,
+        "turso_rows": 17,
+        "count_match": true,
+        "hash_verified": true
+      },
+      {
+        "table": "TICKETS",
+        "local_rows": 174,
+        "turso_rows": 174,
+        "count_match": true,
+        "hash_verified": true
+      },
+      {
+        "table": "INCIDENTES",
+        "local_rows": 21,
+        "turso_rows": 21,
+        "count_match": true,
+        "hash_verified": true
+      }
+    ],
+    "differences": [],
+    "critical_hashes_match": true
+  },
+  "functional_tests": {
+    "all_passed": true,
+    "total_tests": 18,
+    "passed_count": 18,
+    "failed_count": 0,
+    "tests": [
+      {
+        "test": "Smoke CRUD (Insert, Read, Update, Delete)",
+        "passed": true,
+        "details": "Operaciones CRUD at\u00f3micas ejecutadas en Turso Cloud."
+      },
+      {
+        "test": "Autenticaci\u00f3n & Login (Verificaci\u00f3n Hash ADMIN)",
+        "passed": true,
+        "details": "Usuario ADMIN validado con credenciales seguras."
+      },
+      {
+        "test": "M\u00f3dulo Usuarios",
+        "passed": true,
+        "details": "Consulta ejecutada satisfactoriamente (2 operaciones)."
+      },
+      {
+        "test": "M\u00f3dulo Registros / Colaboradores",
+        "passed": true,
+        "details": "Consulta ejecutada satisfactoriamente (2 operaciones)."
+      },
+      {
+        "test": "M\u00f3dulo Perfiles / Roles",
+        "passed": true,
+        "details": "Consulta ejecutada satisfactoriamente (2 operaciones)."
+      },
+      {
+        "test": "M\u00f3dulo Asignaci\u00f3n de Grupos",
+        "passed": true,
+        "details": "Consulta ejecutada satisfactoriamente (2 operaciones)."
+      },
+      {
+        "test": "M\u00f3dulo Detalle de Grupos",
+        "passed": true,
+        "details": "Consulta ejecutada satisfactoriamente (2 operaciones)."
+      },
+      {
+        "test": "M\u00f3dulo Actividades",
+        "passed": true,
+        "details": "Consulta ejecutada satisfactoriamente (2 operaciones)."
+      },
+      {
+        "test": "M\u00f3dulo Historial de Estados",
+        "passed": true,
+        "details": "Consulta ejecutada satisfactoriamente (2 operaciones)."
+      },
+      {
+        "test": "M\u00f3dulo Asignaciones de Actividades",
+        "passed": true,
+        "details": "Consulta ejecutada satisfactoriamente (2 operaciones)."
+      },
+      {
+        "test": "M\u00f3dulo Seguimiento",
+        "passed": true,
+        "details": "Consulta ejecutada satisfactoriamente (2 operaciones)."
+      },
+      {
+        "test": "M\u00f3dulo Cat\u00e1logo de Proyectos",
+        "passed": true,
+        "details": "Consulta ejecutada satisfactoriamente (2 operaciones)."
+      },
+      {
+        "test": "M\u00f3dulo Cat\u00e1logo de Aplicaciones",
+        "passed": true,
+        "details": "Consulta ejecutada satisfactoriamente (2 operaciones)."
+      },
+      {
+        "test": "M\u00f3dulo Cat\u00e1logo de Pases",
+        "passed": true,
+        "details": "Consulta ejecutada satisfactoriamente (2 operaciones)."
+      },
+      {
+        "test": "M\u00f3dulo Tickets",
+        "passed": true,
+        "details": "Consulta ejecutada satisfactoriamente (2 operaciones)."
+      },
+      {
+        "test": "M\u00f3dulo Incidentes",
+        "passed": true,
+        "details": "Consulta ejecutada satisfactoriamente (2 operaciones)."
+      },
+      {
+        "test": "M\u00f3dulo Auditor\u00eda",
+        "passed": true,
+        "details": "Consulta ejecutada satisfactoriamente (2 operaciones)."
+      },
+      {
+        "test": "M\u00f3dulo Tablero Kanban (Agrupaci\u00f3n por Estados)",
+        "passed": true,
+        "details": "Consulta ejecutada satisfactoriamente (2 operaciones)."
+      }
+    ]
+  },
+  "can_activate_turso": true,
+  "error_message": null,
+  "target_database_url": "https://gestor-actividades-anarchy9902.aws-us-east-1.turso.io"
+}

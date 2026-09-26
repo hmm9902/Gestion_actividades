@@ -61,12 +61,38 @@ class GrupoService:
             raise HTTPException(status_code=404, detail="Grupo no encontrado")
 
         datos_anteriores = {
+            "codigo": grupo.CODIGO_GRUPO,
             "nombre": grupo.NOMBRE_GRUPO,
             "principal": grupo.REGISTRO_PRINCIPAL,
             "estado": grupo.ESTADO_GRUPO
         }
 
-        # Si se desea cambiar el principal, validar que sea SWE y activo
+        # 1. Validación y cambio de CODIGO_GRUPO si se envió uno nuevo
+        cambio_codigo = False
+        nuevo_codigo = None
+        if data.codigo_grupo is not None:
+            candidato = data.codigo_grupo.strip().upper()
+            if not candidato:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="El código del grupo no puede estar vacío"
+                )
+            if len(candidato) > 50:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="El código del grupo no puede exceder 50 caracteres"
+                )
+            if candidato != grupo.CODIGO_GRUPO:
+                existente = self.grupo_repo.get_grupo(candidato)
+                if existente:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Ya existe un grupo con el código '{candidato}'. No se puede repetir el código."
+                    )
+                cambio_codigo = True
+                nuevo_codigo = candidato
+
+        # 2. Si se desea cambiar el principal, validar que sea SWE y activo (SOLO 1 LÍDER PRINCIPAL)
         if data.registro_principal and data.registro_principal != grupo.REGISTRO_PRINCIPAL:
             principal = self.usuario_repo.get_registro(data.registro_principal)
             if not principal:
@@ -79,7 +105,7 @@ class GrupoService:
             if principal.ESTADO != "ACTIVO":
                 raise HTTPException(status_code=400, detail="El registro principal está inactivo")
 
-        # REGLA CRÍTICA: No permitir inactivar un grupo si existen actividades EN_PRD o Finalizado
+        # 3. REGLA CRÍTICA: No permitir inactivar un grupo si existen actividades EN_PRD o Finalizado
         if data.estado_grupo == "INACTIVO" and grupo.ESTADO_GRUPO == "ACTIVO":
             if self.grupo_repo.has_active_or_finished_activities(codigo_grupo):
                 raise HTTPException(
@@ -87,15 +113,41 @@ class GrupoService:
                     detail="No se puede inactivar el grupo porque tiene actividades en estado EN_PRD o Finalizado"
                 )
 
+        # 4. Si cambió el código del grupo, migrarlo con relaciones en cascada
+        if cambio_codigo and nuevo_codigo:
+            grupo = self.grupo_repo.update_codigo_grupo(antiguo_codigo=codigo_grupo, nuevo_codigo=nuevo_codigo)
+            codigo_grupo = nuevo_codigo
+
+        # 5. Asegurar que el líder (nuevo o existente) sea miembro activo del grupo
+        if data.registro_principal and data.registro_principal != grupo.REGISTRO_PRINCIPAL:
+            self.grupo_repo.add_miembro(codigo_grupo, data.registro_principal)
+
+        # 6. Actualizar otros campos si fueron enviados
         update_dict = {}
         if data.nombre_grupo is not None:
-            update_dict["NOMBRE_GRUPO"] = data.nombre_grupo
+            nombre = data.nombre_grupo.strip()
+            if not nombre:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="El título o nombre del grupo no puede estar vacío"
+                )
+            if len(nombre) > 150:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="El título del grupo no puede exceder 150 caracteres"
+                )
+            update_dict["NOMBRE_GRUPO"] = nombre
         if data.registro_principal is not None:
             update_dict["REGISTRO_PRINCIPAL"] = data.registro_principal
         if data.estado_grupo is not None:
             update_dict["ESTADO_GRUPO"] = data.estado_grupo
 
-        self.grupo_repo.update_grupo(grupo, update_dict)
+        if update_dict:
+            self.grupo_repo.update_grupo(grupo, update_dict)
+
+        datos_nuevos = dict(update_dict)
+        if cambio_codigo:
+            datos_nuevos["CODIGO_GRUPO"] = codigo_grupo
 
         self.auditoria_repo.registrar(
             registro_usuario=usuario_actual_registro,
@@ -103,7 +155,7 @@ class GrupoService:
             entidad="ASIGNACION_GRUPOS",
             entidad_id=codigo_grupo,
             datos_anteriores=datos_anteriores,
-            datos_nuevos=update_dict
+            datos_nuevos=datos_nuevos
         )
         return self.get_grupo_detalle(codigo_grupo)
 

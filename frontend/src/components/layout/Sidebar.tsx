@@ -3,7 +3,8 @@ import { NavLink } from 'react-router-dom';
 import {
   Users, UserCheck, ShieldCheck,
   Kanban, Users2, Settings, ShieldAlert,
-  ChevronLeft, ChevronRight, Layers, FolderKanban, Database
+  ChevronLeft, ChevronRight, Layers, FolderKanban, Database, Rocket,
+  Ticket as TicketIcon, AlertOctagon
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -111,6 +112,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ colapsado, setColapsado }) => 
               <Users2 size={18} />
               {!colapsado && <span>Asignación de Grupos</span>}
             </NavLink>
+            {(usuario?.perfil === 'ADMIN' || usuario?.perfil === 'SWE') && (
+              <NavLink to="/pases" style={linkEstilo} title="Gestión de Pases">
+                <Rocket size={18} />
+                {!colapsado && <span>Gestión de Pases</span>}
+              </NavLink>
+            )}
+            {(usuario?.perfil === 'ADMIN' || usuario?.perfil === 'SWE') && (
+              <NavLink to="/tickets" style={linkEstilo} title="Gestión de Tickets">
+                <TicketIcon size={18} />
+                {!colapsado && <span>Gestión de Tickets</span>}
+              </NavLink>
+            )}
+            {(usuario?.perfil === 'ADMIN' || usuario?.perfil === 'SWE') && (
+              <NavLink to="/incidentes" style={linkEstilo} title="Registro de Incidentes">
+                <AlertOctagon size={18} />
+                {!colapsado && <span>Registro de Incidentes</span>}
+              </NavLink>
+            )}
           </div>
         </div>
 
@@ -130,6 +149,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ colapsado, setColapsado }) => 
               <NavLink to="/proyectos" style={linkEstilo} title="Proyectos">
                 <FolderKanban size={18} />
                 {!colapsado && <span>Proyectos</span>}
+              </NavLink>
+            )}
+            {(usuario?.perfil === 'ADMIN' || usuario?.perfil === 'SWE') && (
+              <NavLink to="/aplicaciones" style={linkEstilo} title="Aplicaciones">
+                <Layers size={18} />
+                {!colapsado && <span>Aplicaciones</span>}
               </NavLink>
             )}
             {usuario?.perfil === 'ADMIN' && (

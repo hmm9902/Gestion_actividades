@@ -97,6 +97,20 @@ export interface Proyecto {
   fecha_actualizacion?: string | null;
 }
 
+export type EstadoAplicacion = 'Activo' | 'Inactivo';
+
+export interface Aplicacion {
+  aplicacion_id: number;
+  nombre_aplicacion: string;
+  siglas?: string | null;
+  lider_tecno?: string | null;
+  po_contacto?: string | null;
+  scrum_datos?: string | null;
+  descripcion_actividad?: string | null;
+  estado: EstadoAplicacion;
+  fecha_registro: string;
+}
+
 export interface ActividadDetalle extends Actividad {
   historial_estados: HistorialEstado[];
   historial_asignaciones: HistorialAsignado[];
@@ -162,3 +176,100 @@ export interface AuditoriaEvento {
   ip?: string | null;
   user_agent?: string | null;
 }
+
+export type TipoAmbiente = 'A' | 'D' | 'H';
+
+export type EstadoSRT =
+  | 'REGISTRADO'
+  | 'UAT_SOLICITADO'
+  | 'UAT_DESPLEGADO'
+  | 'QA_CERTIFICADO'
+  | 'PRD_SOLICITADO'
+  | 'PRD_EJECUTADO'
+  | 'RECHAZADO'
+  | 'ANULADO';
+
+export interface Pase {
+  pase_id: number;
+  tipo_ambiente: TipoAmbiente;
+  proyecto?: string | null;
+  app?: string | null;
+  fecha_registro_srt?: string | null;
+  fecha_solicitado_uat?: string | null;
+  fecha_desplegado_uat?: string | null;
+  estado_srt: EstadoSRT;
+  codigo_srt?: string | null;
+  titulo: string;
+  conformes_prd?: string | null;
+  qa?: string | null;
+  fecha_certificacion?: string | null;
+  fecha_registro_oc?: string | null;
+  fecha_hora_pase_prd?: string | null;
+  oc?: string | null;
+  stado_oc?: string | null;
+  estado_oc?: string | null;
+  operador_pase?: string | null;
+  dev?: string | null;
+  sustento_valor_negocio?: string | null;
+  usuario_final_aprobacion?: string | null;
+  q_sp_prd?: string | null;
+  responsable_owner_proyecto?: string | null;
+  motivo_estado?: string | null;
+  fecha_registro: string;
+  fecha_actualizacion?: string | null;
+}
+
+export type TipoTicket = 'Incident' | 'Request' | 'OC';
+
+export type AmbienteTicket = 'UAT' | 'PRD';
+
+export type EstadoTicket =
+  | 'ABIERTO'
+  | 'ASIGNADO'
+  | 'ANULADO'
+  | 'RECHAZADO'
+  | 'DEVUELTO'
+  | 'EN_PROCESO'
+  | 'SOLUCIONADO';
+
+export interface Ticket {
+  ticket_id: number;
+  tipo: TipoTicket;
+  fecha_registro?: string | null;
+  aplicativo?: string | null;
+  proyecto?: string | null;
+  ambiente?: AmbienteTicket | null;
+  ticket: string;
+  descripcion?: string | null;
+  fecha_atencion?: string | null;
+  ibm_asignado?: string | null;
+  cel_contacto?: string | null;
+  estado: EstadoTicket;
+  comentario?: string | null;
+  fecha_creacion: string;
+  fecha_actualizacion?: string | null;
+}
+
+export type AmbienteIncidente = 'UAT' | 'PRD';
+export type RutaCriticaIncidente = 'SI' | 'NO';
+
+export interface Incidente {
+  incidente_id: number;
+  atendido_por?: string | null;
+  aplicativo?: string | null;
+  ruta_critica?: RutaCriticaIncidente | string | null;
+  job: string;
+  fecha_cancelacion?: string | null;
+  server?: string | null;
+  ruta?: string | null;
+  dtsx?: string | null;
+  aplicar?: string | null;
+  hora_cancelacion?: string | null;
+  descripcion_error?: string | null;
+  solucion?: string | null;
+  fecha_hora_solucion?: string | null;
+  ambiente: AmbienteIncidente | string;
+  fecha_creacion: string;
+  fecha_actualizacion?: string | null;
+}
+

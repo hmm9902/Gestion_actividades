@@ -1,11 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { 
   Search, Filter, ArrowUpDown, ChevronLeft, ChevronRight, 
-  Eye, Edit, AlertTriangle, Plus, Trash2 
+  Eye, Edit, AlertTriangle, Plus, Trash2, Rocket 
 } from 'lucide-react';
 import { Actividad, Grupo, EstadoActividad, TipoActividad } from '../../types';
 import { apiRequest } from '../../lib/api';
 import { useNotificacion } from '../../context/NotificacionContext';
+import { ModalEditarPase } from '../common/ModalEditarPase';
 
 interface TablaActividadesProps {
   actividades: Actividad[];
@@ -33,6 +34,9 @@ export const TablaActividades: React.FC<TablaActividadesProps> = ({
   const [filtroTipo, setFiltroTipo] = useState('');
   const [filtroSprint, setFiltroSprint] = useState('');
   const [filtroQ, setFiltroQ] = useState('');
+
+  // Estado para modal Editar Pase al hacer clic en celda de SRT Rational
+  const [paseSrtSeleccionado, setPaseSrtSeleccionado] = useState<{ codigoSrt: string; estadoActividad: string } | null>(null);
 
   // Tooltip dinámico para la columna Título
   const [tooltipTitulo, setTooltipTitulo] = useState<{ texto: string; x: number; y: number } | null>(null);
@@ -215,9 +219,9 @@ export const TablaActividades: React.FC<TablaActividadesProps> = ({
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
             <thead style={{ backgroundColor: 'var(--color-superficie-hover)', borderBottom: '1px solid var(--color-borde)' }}>
               <tr>
-                <th style={{ padding: '12px 16px', textAlign: 'left', cursor: 'pointer' }} onClick={() => cambiarOrden('codigo_actividad')}>
+                <th style={{ padding: '12px 16px', textAlign: 'left', cursor: 'pointer', minWidth: '150px' }} onClick={() => cambiarOrden('srt_rational')}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    Código <ArrowUpDown size={14} />
+                    SRT Rational <ArrowUpDown size={14} />
                   </div>
                 </th>
                 <th style={{ padding: '12px 16px', textAlign: 'left', cursor: 'pointer' }} onClick={() => cambiarOrden('titulo')}>
@@ -268,8 +272,44 @@ export const TablaActividades: React.FC<TablaActividadesProps> = ({
                     onFocus={e => (e.currentTarget.style.backgroundColor = '#FEF9C3')}
                     onBlur={e => (e.currentTarget.style.backgroundColor = 'transparent')}
                   >
-                    <td style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--color-primario)' }}>
-                      {act.codigo_actividad}
+                    <td
+                      style={{
+                        padding: '12px 16px',
+                        fontWeight: 700,
+                        whiteSpace: 'nowrap',
+                      }}
+                      onClick={e => {
+                        if (act.srt_rational && act.srt_rational.trim()) {
+                          e.stopPropagation();
+                          setPaseSrtSeleccionado({
+                            codigoSrt: act.srt_rational.trim(),
+                            estadoActividad: act.estado,
+                          });
+                        }
+                      }}
+                    >
+                      {act.srt_rational && act.srt_rational.trim() ? (
+                        <div
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            cursor: 'pointer',
+                            padding: '4px 8px',
+                            borderRadius: 'var(--radio-sm, 4px)',
+                            backgroundColor: 'var(--color-primario-suave, #EFF6FF)',
+                            color: 'var(--color-primario, #2563EB)',
+                            border: '1px solid rgba(37, 99, 235, 0.25)',
+                            transition: 'all 0.15s ease',
+                          }}
+                          title={`Haga clic para ver / editar pase: ${act.srt_rational}`}
+                        >
+                          <Rocket size={14} />
+                          <span>{act.srt_rational}</span>
+                        </div>
+                      ) : (
+                        <span style={{ color: 'var(--color-texto-terciario)', fontStyle: 'italic', fontWeight: 400 }}>-</span>
+                      )}
                     </td>
                     <td
                       style={{ padding: '12px 16px', maxWidth: '280px', cursor: 'default' }}
@@ -428,6 +468,18 @@ export const TablaActividades: React.FC<TablaActividadesProps> = ({
           </div>
           {tooltipTitulo.texto}
         </div>
+      )}
+      {/* Modal Editar Pase al hacer clic en SRT Rational */}
+      {paseSrtSeleccionado && (
+        <ModalEditarPase
+          abierto={!!paseSrtSeleccionado}
+          codigoSrt={paseSrtSeleccionado.codigoSrt}
+          actividadEstado={paseSrtSeleccionado.estadoActividad}
+          onCerrar={() => setPaseSrtSeleccionado(null)}
+          onPaseActualizado={() => {
+            onActualizar?.();
+          }}
+        />
       )}
 
     </div>

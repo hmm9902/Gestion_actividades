@@ -1,8 +1,21 @@
 from datetime import datetime, date
 from typing import Optional, List, Any, Literal
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from pydantic import BaseModel, EmailStr, Field, ConfigDict, model_validator
 
 EstadoProyectoLiteral = Literal["Activo", "standBy", "Entregado"]
+EstadoAplicacionLiteral = Literal["Activo", "Inactivo"]
+TipoAmbienteLiteral = Literal["A", "D", "H"]
+EstadoPaseLiteral = Literal[
+    "REGISTRADO", "UAT_SOLICITADO", "UAT_DESPLEGADO", "QA_CERTIFICADO",
+    "PRD_SOLICITADO", "PRD_EJECUTADO", "RECHAZADO", "ANULADO"
+]
+TipoTicketLiteral = Literal["Incident", "Request", "OC"]
+AmbienteTicketLiteral = Literal["UAT", "PRD"]
+EstadoTicketLiteral = Literal[
+    "ABIERTO", "ASIGNADO", "ANULADO", "RECHAZADO",
+    "DEVUELTO", "EN_PROCESO", "SOLUCIONADO"
+]
+ESTADOS_TICKET_TERMINALES = {"SOLUCIONADO", "ANULADO", "RECHAZADO"}
 
 
 # --- Auth ---
@@ -125,6 +138,7 @@ class GrupoCreate(BaseModel):
     miembros: Optional[List[str]] = []
 
 class GrupoUpdate(BaseModel):
+    codigo_grupo: Optional[str] = None
     nombre_grupo: Optional[str] = None
     registro_principal: Optional[str] = None
     estado_grupo: Optional[str] = None
@@ -172,6 +186,144 @@ class ProyectoResponse(BaseModel):
     fecha_dead_line: Optional[date] = None
     fecha_registro: datetime
     estado: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+# --- Aplicaciones ---
+class AplicacionCreate(BaseModel):
+    nombre_aplicacion: str
+    siglas: Optional[str] = None
+    lider_tecno: Optional[str] = None
+    po_contacto: Optional[str] = None
+    scrum_datos: Optional[str] = None
+    descripcion_actividad: Optional[str] = None
+    estado: EstadoAplicacionLiteral = "Activo"
+    fecha_registro: Optional[date] = None
+
+class AplicacionUpdate(BaseModel):
+    nombre_aplicacion: Optional[str] = None
+    siglas: Optional[str] = None
+    lider_tecno: Optional[str] = None
+    po_contacto: Optional[str] = None
+    scrum_datos: Optional[str] = None
+    descripcion_actividad: Optional[str] = None
+    estado: Optional[EstadoAplicacionLiteral] = None
+    fecha_registro: Optional[date] = None
+
+class AplicacionResponse(BaseModel):
+    aplicacion_id: int
+    nombre_aplicacion: str
+    siglas: Optional[str] = None
+    lider_tecno: Optional[str] = None
+    po_contacto: Optional[str] = None
+    scrum_datos: Optional[str] = None
+    descripcion_actividad: Optional[str] = None
+    estado: str
+    fecha_registro: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+# --- Pases IBK ---
+class PaseCreate(BaseModel):
+    tipo_ambiente: TipoAmbienteLiteral = "D"
+    proyecto: Optional[str] = None
+    app: Optional[str] = None
+    fecha_registro_srt: Optional[date] = None
+    fecha_solicitado_uat: Optional[date] = None
+    fecha_desplegado_uat: Optional[date] = None
+    estado_srt: EstadoPaseLiteral = "REGISTRADO"
+    codigo_srt: Optional[str] = None
+    titulo: str
+    conformes_prd: Optional[str] = None
+    qa: Optional[str] = None
+    fecha_certificacion: Optional[date] = None
+    fecha_registro_oc: Optional[date] = None
+    fecha_hora_pase_prd: Optional[datetime] = None
+    oc: Optional[str] = None
+    stado_oc: Optional[str] = None
+    estado_oc: Optional[str] = None
+    operador_pase: Optional[str] = None
+    dev: Optional[str] = None
+    sustento_valor_negocio: Optional[str] = None
+    usuario_final_aprobacion: Optional[str] = None
+    q_sp_prd: Optional[str] = None
+    responsable_owner_proyecto: Optional[str] = None
+    motivo_estado: Optional[str] = None
+
+    @model_validator(mode='before')
+    @classmethod
+    def normalizar_stado_oc(cls, values: Any) -> Any:
+        if isinstance(values, dict):
+            if values.get('estado_oc') is not None and not values.get('stado_oc'):
+                values['stado_oc'] = values['estado_oc']
+            elif values.get('stado_oc') is not None and not values.get('estado_oc'):
+                values['estado_oc'] = values['stado_oc']
+        return values
+
+class PaseUpdate(BaseModel):
+    tipo_ambiente: Optional[TipoAmbienteLiteral] = None
+    proyecto: Optional[str] = None
+    app: Optional[str] = None
+    fecha_registro_srt: Optional[date] = None
+    fecha_solicitado_uat: Optional[date] = None
+    fecha_desplegado_uat: Optional[date] = None
+    estado_srt: Optional[EstadoPaseLiteral] = None
+    codigo_srt: Optional[str] = None
+    titulo: Optional[str] = None
+    conformes_prd: Optional[str] = None
+    qa: Optional[str] = None
+    fecha_certificacion: Optional[date] = None
+    fecha_registro_oc: Optional[date] = None
+    fecha_hora_pase_prd: Optional[datetime] = None
+    oc: Optional[str] = None
+    stado_oc: Optional[str] = None
+    estado_oc: Optional[str] = None
+    operador_pase: Optional[str] = None
+    dev: Optional[str] = None
+    sustento_valor_negocio: Optional[str] = None
+    usuario_final_aprobacion: Optional[str] = None
+    q_sp_prd: Optional[str] = None
+    responsable_owner_proyecto: Optional[str] = None
+    motivo_estado: Optional[str] = None
+
+    @model_validator(mode='before')
+    @classmethod
+    def normalizar_stado_oc(cls, values: Any) -> Any:
+        if isinstance(values, dict):
+            if values.get('estado_oc') is not None and not values.get('stado_oc'):
+                values['stado_oc'] = values['estado_oc']
+            elif values.get('stado_oc') is not None and not values.get('estado_oc'):
+                values['estado_oc'] = values['stado_oc']
+        return values
+
+class PaseResponse(BaseModel):
+    pase_id: int
+    tipo_ambiente: str
+    proyecto: Optional[str] = None
+    app: Optional[str] = None
+    fecha_registro_srt: Optional[date] = None
+    fecha_solicitado_uat: Optional[date] = None
+    fecha_desplegado_uat: Optional[date] = None
+    estado_srt: str
+    codigo_srt: Optional[str] = None
+    titulo: str
+    conformes_prd: Optional[str] = None
+    qa: Optional[str] = None
+    fecha_certificacion: Optional[date] = None
+    fecha_registro_oc: Optional[date] = None
+    fecha_hora_pase_prd: Optional[datetime] = None
+    oc: Optional[str] = None
+    stado_oc: Optional[str] = None
+    estado_oc: Optional[str] = None
+    operador_pase: Optional[str] = None
+    dev: Optional[str] = None
+    sustento_valor_negocio: Optional[str] = None
+    usuario_final_aprobacion: Optional[str] = None
+    q_sp_prd: Optional[str] = None
+    responsable_owner_proyecto: Optional[str] = None
+    motivo_estado: Optional[str] = None
+    fecha_registro: datetime
+    fecha_actualizacion: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -296,5 +448,111 @@ class AuditoriaResponse(BaseModel):
     datos_nuevos: Optional[str] = None
     ip: Optional[str] = None
     user_agent: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+# --- Tickets ---
+class TicketCreate(BaseModel):
+    tipo: TipoTicketLiteral = "Incident"
+    fecha_registro: Optional[datetime] = None
+    aplicativo: Optional[str] = None
+    proyecto: Optional[str] = None
+    ambiente: Optional[AmbienteTicketLiteral] = None
+    ticket: str
+    descripcion: Optional[str] = None
+    fecha_atencion: Optional[datetime] = None
+    ibm_asignado: Optional[str] = None
+    cel_contacto: Optional[str] = None
+    estado: EstadoTicketLiteral = "ABIERTO"
+    comentario: Optional[str] = None
+
+class TicketUpdate(BaseModel):
+    tipo: Optional[TipoTicketLiteral] = None
+    fecha_registro: Optional[datetime] = None
+    aplicativo: Optional[str] = None
+    proyecto: Optional[str] = None
+    ambiente: Optional[AmbienteTicketLiteral] = None
+    ticket: Optional[str] = None
+    descripcion: Optional[str] = None
+    fecha_atencion: Optional[datetime] = None
+    ibm_asignado: Optional[str] = None
+    cel_contacto: Optional[str] = None
+    estado: Optional[EstadoTicketLiteral] = None
+    comentario: Optional[str] = None
+
+class TicketResponse(BaseModel):
+    ticket_id: int
+    tipo: str
+    fecha_registro: Optional[datetime] = None
+    aplicativo: Optional[str] = None
+    proyecto: Optional[str] = None
+    ambiente: Optional[str] = None
+    ticket: str
+    descripcion: Optional[str] = None
+    fecha_atencion: Optional[datetime] = None
+    ibm_asignado: Optional[str] = None
+    cel_contacto: Optional[str] = None
+    estado: str
+    comentario: Optional[str] = None
+    fecha_creacion: datetime
+    fecha_actualizacion: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# --- Incidentes ---
+AmbienteIncidenteLiteral = Literal["UAT", "PRD"]
+RutaCriticaLiteral = Literal["SI", "NO"]
+
+class IncidenteCreate(BaseModel):
+    atendido_por: Optional[str] = None
+    aplicativo: Optional[str] = None
+    ruta_critica: Optional[str] = "NO"
+    job: str
+    fecha_cancelacion: Optional[date] = None
+    server: Optional[str] = None
+    ruta: Optional[str] = None
+    dtsx: Optional[str] = None
+    aplicar: Optional[str] = None
+    hora_cancelacion: Optional[str] = None
+    descripcion_error: Optional[str] = None
+    solucion: Optional[str] = None
+    fecha_hora_solucion: Optional[datetime] = None
+    ambiente: str = "PRD"
+
+class IncidenteUpdate(BaseModel):
+    atendido_por: Optional[str] = None
+    aplicativo: Optional[str] = None
+    ruta_critica: Optional[str] = None
+    job: Optional[str] = None
+    fecha_cancelacion: Optional[date] = None
+    server: Optional[str] = None
+    ruta: Optional[str] = None
+    dtsx: Optional[str] = None
+    aplicar: Optional[str] = None
+    hora_cancelacion: Optional[str] = None
+    descripcion_error: Optional[str] = None
+    solucion: Optional[str] = None
+    fecha_hora_solucion: Optional[datetime] = None
+    ambiente: Optional[str] = None
+
+class IncidenteResponse(BaseModel):
+    incidente_id: int
+    atendido_por: Optional[str] = None
+    aplicativo: Optional[str] = None
+    ruta_critica: Optional[str] = None
+    job: str
+    fecha_cancelacion: Optional[date] = None
+    server: Optional[str] = None
+    ruta: Optional[str] = None
+    dtsx: Optional[str] = None
+    aplicar: Optional[str] = None
+    hora_cancelacion: Optional[str] = None
+    descripcion_error: Optional[str] = None
+    solucion: Optional[str] = None
+    fecha_hora_solucion: Optional[datetime] = None
+    ambiente: str
+    fecha_creacion: datetime
+    fecha_actualizacion: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)

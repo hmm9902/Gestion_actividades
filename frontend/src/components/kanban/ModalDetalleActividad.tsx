@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { 
   X, Info, UserCheck, MessageSquare, Plus, Clock, 
-  Calendar, CheckCircle, AlertTriangle, Shield, RefreshCw, Trash2
+  Calendar, CheckCircle, AlertTriangle, Shield, RefreshCw, Trash2,
+  Edit2, Rocket
 } from 'lucide-react';
 import { ActividadDetalle, MiembroGrupo } from '../../types';
 import { apiRequest } from '../../lib/api';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotificacion } from '../../context/NotificacionContext';
 import { ModalConfirmacionEliminar } from '../common/ModalConfirmacionEliminar';
+import { ModalEditarPase } from '../common/ModalEditarPase';
 
 interface ModalDetalleActividadProps {
   codigoActividad: string;
@@ -29,6 +31,34 @@ export const ModalDetalleActividad: React.FC<ModalDetalleActividadProps> = ({
   const [cargando, setCargando] = useState(true);
   const [tabActiva, setTabActiva] = useState<'info' | 'asignaciones' | 'seguimiento'>('info');
 
+  // Estado para abrir modal de Editar Pase según SRT Rational
+  const [srtParaEditarPase, setSrtParaEditarPase] = useState<string | null>(null);
+
+  // Estados para modo de edición de actividad
+  const [modoEdicion, setModoEdicion] = useState(false);
+  const [guardandoEdicion, setGuardandoEdicion] = useState(false);
+  const [formTitulo, setFormTitulo] = useState('');
+  const [formDescripcion, setFormDescripcion] = useState('');
+  const [formSprint, setFormSprint] = useState('');
+  const [formQTrabajo, setFormQTrabajo] = useState('');
+  const [formOrdenCambio, setFormOrdenCambio] = useState('');
+  const [formSrtRational, setFormSrtRational] = useState('');
+  const [formSolicitadoPor, setFormSolicitadoPor] = useState('');
+  const [formAreasAfectadas, setFormAreasAfectadas] = useState('');
+  const [formImpedimentos, setFormImpedimentos] = useState('');
+
+  const sincronizarFormularioEdicion = (act: ActividadDetalle) => {
+    setFormTitulo(act.titulo || '');
+    setFormDescripcion(act.descripcion || '');
+    setFormSprint(act.sprint ? String(act.sprint) : '');
+    setFormQTrabajo(act.q_trabajo ? String(act.q_trabajo) : '');
+    setFormOrdenCambio(act.orden_cambio || '');
+    setFormSrtRational(act.srt_rational || '');
+    setFormSolicitadoPor(act.solicitado_por || '');
+    setFormAreasAfectadas(act.areas_afectadas || '');
+    setFormImpedimentos(act.impedimentos || '');
+  };
+
   // Estados para reasignación (Tab 2)
   const [miembrosGrupo, setMiembrosGrupo] = useState<MiembroGrupo[]>([]);
   const [nuevoAsignado, setNuevoAsignado] = useState('');
@@ -43,6 +73,7 @@ export const ModalDetalleActividad: React.FC<ModalDetalleActividadProps> = ({
       setCargando(true);
       const data = await apiRequest<ActividadDetalle>(`/actividades/${codigoActividad}`);
       setActividad(data);
+      sincronizarFormularioEdicion(data);
 
       if (data.codigo_grupo) {
         try {
@@ -100,6 +131,39 @@ export const ModalDetalleActividad: React.FC<ModalDetalleActividadProps> = ({
       notifyError(err.message || 'Error al registrar seguimiento');
     } finally {
       setGuardandoComentario(false);
+    }
+  };
+
+  const handleGuardarEdicion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formTitulo.trim()) {
+      notifyError('El título de la actividad es obligatorio.');
+      return;
+    }
+    try {
+      setGuardandoEdicion(true);
+      await apiRequest(`/actividades/${codigoActividad}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          titulo: formTitulo.trim(),
+          descripcion: formDescripcion.trim() || null,
+          sprint: formSprint.trim() || null,
+          q_trabajo: formQTrabajo.trim() || null,
+          orden_cambio: formOrdenCambio.trim() || null,
+          srt_rational: formSrtRational.trim() || null,
+          solicitado_por: formSolicitadoPor.trim() || null,
+          areas_afectadas: formAreasAfectadas.trim() || null,
+          impedimentos: formImpedimentos.trim() || null,
+        }),
+      });
+      exito('Actividad actualizada exitosamente.');
+      setModoEdicion(false);
+      await cargarDetalle();
+      onActualizado();
+    } catch (err: any) {
+      notifyError(err.message || 'Error al actualizar la actividad');
+    } finally {
+      setGuardandoEdicion(false);
     }
   };
 
@@ -282,13 +346,28 @@ export const ModalDetalleActividad: React.FC<ModalDetalleActividadProps> = ({
                       Actividad Finalizada (Bloqueada)
                     </span>
                   ) : (
-                    <button
-                      type="button"
-                      className="btn btn-primario btn-sm"
-                      onClick={onAbrirCambioEstado}
-                    >
-                      Cambiar Estado...
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        className="btn btn-primario btn-sm"
+                        onClick={onAbrirCambioEstado}
+                      >
+                        Cambiar Estado...
+                      </button>
+                      <button
+                        type="button"
+                        className={`btn btn-sm ${modoEdicion ? 'btn-secundario' : 'btn-primario'}`}
+                        onClick={() => {
+                          if (!modoEdicion) {
+                            sincronizarFormularioEdicion(actividad);
+                          }
+                          setModoEdicion(!modoEdicion);
+                        }}
+                      >
+                        <Edit2 size={14} style={{ marginRight: '4px' }} />
+                        {modoEdicion ? 'Cancelar' : 'Editar Actividad'}
+                      </button>
+                    </>
                   )}
                   {puedeEliminar && (
                     <button
@@ -304,75 +383,335 @@ export const ModalDetalleActividad: React.FC<ModalDetalleActividadProps> = ({
                 </div>
               </div>
 
-              {/* Descripción */}
-              <div>
-                <label className="form-label">Descripción</label>
-                <div style={{
-                  padding: '12px',
+              {modoEdicion ? (
+                /* FORMULARIO EDITAR ACTIVIDAD */
+                <form onSubmit={handleGuardarEdicion} style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '16px',
+                  backgroundColor: 'var(--color-superficie)',
+                  padding: '16px',
                   borderRadius: 'var(--radio-md)',
-                  backgroundColor: 'var(--color-fondo)',
-                  border: '1px solid var(--color-borde)',
-                  fontSize: '0.875rem',
-                  lineHeight: '1.6',
-                  whiteSpace: 'pre-wrap',
+                  border: '1px solid var(--color-borde)'
                 }}>
-                  {actividad.descripcion || 'Sin descripción registrada.'}
-                </div>
-              </div>
-
-              {/* Impedimentos */}
-              {actividad.impedimentos && (
-                <div>
-                  <label className="form-label" style={{ color: '#DC2626' }}>
-                    <AlertTriangle size={14} style={{ display: 'inline', marginRight: '4px' }} />
-                    Impedimentos Reportados
-                  </label>
                   <div style={{
-                    padding: '12px',
+                    padding: '10px 14px',
                     borderRadius: 'var(--radio-md)',
-                    backgroundColor: '#FEF2F2',
-                    border: '1px solid #FECACA',
-                    color: '#991B1B',
-                    fontSize: '0.875rem',
+                    backgroundColor: 'var(--color-primario-suave, #EFF6FF)',
+                    border: '1px solid var(--color-primario, #2563EB)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
                   }}>
-                    {actividad.impedimentos}
+                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-primario)' }}>
+                      Edición de Actividad: {actividad.codigo_actividad}
+                    </span>
+                    <button
+                      type="button"
+                      className="btn btn-secundario btn-sm"
+                      onClick={() => setModoEdicion(false)}
+                    >
+                      Cancelar
+                    </button>
                   </div>
-                </div>
-              )}
 
-              {/* Cuadrícula de metadatos */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-                <div style={{ padding: '10px', backgroundColor: 'var(--color-fondo)', borderRadius: 'var(--radio-sm)' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--color-texto-terciario)' }}>Sprint</div>
-                  <div style={{ fontWeight: 600 }}>Sprint {actividad.sprint || '-'}</div>
-                </div>
-                <div style={{ padding: '10px', backgroundColor: 'var(--color-fondo)', borderRadius: 'var(--radio-sm)' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--color-texto-terciario)' }}>Q de Trabajo</div>
-                  <div style={{ fontWeight: 600 }}>Q{actividad.q_trabajo || '-'}</div>
-                </div>
-                <div style={{ padding: '10px', backgroundColor: 'var(--color-fondo)', borderRadius: 'var(--radio-sm)' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--color-texto-terciario)' }}>Orden de Cambio (OC)</div>
-                  <div style={{ fontWeight: 600 }}>{actividad.orden_cambio || 'N/A'}</div>
-                </div>
-                <div style={{ padding: '10px', backgroundColor: 'var(--color-fondo)', borderRadius: 'var(--radio-sm)' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--color-texto-terciario)' }}>SRT Rational</div>
-                  <div style={{ fontWeight: 600 }}>{actividad.srt_rational || 'N/A'}</div>
-                </div>
-                <div style={{ padding: '10px', backgroundColor: 'var(--color-fondo)', borderRadius: 'var(--radio-sm)' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--color-texto-terciario)' }}>Solicitado por</div>
-                  <div style={{ fontWeight: 600 }}>{actividad.solicitado_por || 'N/A'}</div>
-                </div>
-                <div style={{ padding: '10px', backgroundColor: 'var(--color-fondo)', borderRadius: 'var(--radio-sm)' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--color-texto-terciario)' }}>Áreas Afectadas</div>
-                  <div style={{ fontWeight: 600 }}>{actividad.areas_afectadas || 'N/A'}</div>
-                </div>
-                <div style={{ padding: '10px', backgroundColor: 'var(--color-fondo)', borderRadius: 'var(--radio-sm)' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--color-texto-terciario)' }}>Proyecto</div>
-                  <div style={{ fontWeight: 600, color: actividad.nombre_proyecto ? 'var(--color-primario)' : 'inherit' }}>
-                    {actividad.nombre_proyecto || 'N/A'}
+                  {/* Título */}
+                  <div>
+                    <label className="form-label">Título de la Actividad (*)</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={formTitulo}
+                      onChange={e => setFormTitulo(e.target.value)}
+                      required
+                    />
                   </div>
-                </div>
-              </div>
+
+                  {/* Descripción */}
+                  <div>
+                    <label className="form-label">Descripción</label>
+                    <textarea
+                      className="form-textarea"
+                      rows={3}
+                      value={formDescripcion}
+                      onChange={e => setFormDescripcion(e.target.value)}
+                    />
+                  </div>
+
+                  {/* Impedimentos */}
+                  <div>
+                    <label className="form-label" style={{ color: '#DC2626' }}>
+                      <AlertTriangle size={14} style={{ display: 'inline', marginRight: '4px' }} />
+                      Impedimentos Reportados
+                    </label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="Dejar vacío si no existen impedimentos..."
+                      value={formImpedimentos}
+                      onChange={e => setFormImpedimentos(e.target.value)}
+                    />
+                  </div>
+
+                  {/* Metadatos editables */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+                    <div>
+                      <label className="form-label">Sprint</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="Ej: 1"
+                        value={formSprint}
+                        onChange={e => setFormSprint(e.target.value)}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="form-label">Q de Trabajo</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="Ej: 1"
+                        value={formQTrabajo}
+                        onChange={e => setFormQTrabajo(e.target.value)}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="form-label">Orden de Cambio (OC)</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="Ej: OC-4412"
+                        value={formOrdenCambio}
+                        onChange={e => setFormOrdenCambio(e.target.value)}
+                      />
+                    </div>
+
+                    {/* SRT Rational con botón e icono */}
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                        <label className="form-label" style={{ margin: 0 }}>SRT Rational</label>
+                        {formSrtRational.trim() && (
+                          <button
+                            type="button"
+                            onClick={() => setSrtParaEditarPase(formSrtRational.trim())}
+                            title={`Editar Pase: ${formSrtRational.trim()}`}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              background: 'var(--color-primario-suave, #EFF6FF)',
+                              color: 'var(--color-primario, #2563EB)',
+                              border: '1px solid var(--color-primario, #2563EB)',
+                              borderRadius: 'var(--radio-sm, 4px)',
+                              padding: '2px 8px',
+                              fontSize: '0.72rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            <Rocket size={12} />
+                            <span>Editar Pase</span>
+                          </button>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                        <input
+                          type="text"
+                          className="form-input"
+                          placeholder="Ej: SRT_2026-16777"
+                          value={formSrtRational}
+                          onChange={e => setFormSrtRational(e.target.value)}
+                        />
+                        {formSrtRational.trim() && (
+                          <button
+                            type="button"
+                            onClick={() => setSrtParaEditarPase(formSrtRational.trim())}
+                            title={`Abrir ventana Editar Pase: ${formSrtRational.trim()}`}
+                            style={{
+                              padding: '8px 12px',
+                              borderRadius: 'var(--radio-md)',
+                              backgroundColor: 'var(--color-primario, #2563EB)',
+                              color: '#FFF',
+                              border: 'none',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0
+                            }}
+                          >
+                            <Rocket size={16} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="form-label">Solicitado por</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="Ej: Jefatura de Canales"
+                        value={formSolicitadoPor}
+                        onChange={e => setFormSolicitadoPor(e.target.value)}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="form-label">Áreas Afectadas</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="Ej: Canales, Middleware"
+                        value={formAreasAfectadas}
+                        onChange={e => setFormAreasAfectadas(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '8px' }}>
+                    <button
+                      type="button"
+                      className="btn btn-secundario"
+                      onClick={() => setModoEdicion(false)}
+                      disabled={guardandoEdicion}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      className="btn btn-primario"
+                      disabled={guardandoEdicion}
+                    >
+                      {guardandoEdicion ? 'Guardando...' : 'Guardar Cambios de Actividad'}
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <>
+                  {/* Descripción */}
+                  <div>
+                    <label className="form-label">Descripción</label>
+                    <div style={{
+                      padding: '12px',
+                      borderRadius: 'var(--radio-md)',
+                      backgroundColor: 'var(--color-fondo)',
+                      border: '1px solid var(--color-borde)',
+                      fontSize: '0.875rem',
+                      lineHeight: '1.6',
+                      whiteSpace: 'pre-wrap',
+                    }}>
+                      {actividad.descripcion || 'Sin descripción registrada.'}
+                    </div>
+                  </div>
+
+                  {/* Impedimentos */}
+                  {actividad.impedimentos && (
+                    <div>
+                      <label className="form-label" style={{ color: '#DC2626' }}>
+                        <AlertTriangle size={14} style={{ display: 'inline', marginRight: '4px' }} />
+                        Impedimentos Reportados
+                      </label>
+                      <div style={{
+                        padding: '12px',
+                        borderRadius: 'var(--radio-md)',
+                        backgroundColor: '#FEF2F2',
+                        border: '1px solid #FECACA',
+                        color: '#991B1B',
+                        fontSize: '0.875rem',
+                      }}>
+                        {actividad.impedimentos}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Cuadrícula de metadatos */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+                    <div style={{ padding: '10px', backgroundColor: 'var(--color-fondo)', borderRadius: 'var(--radio-sm)' }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--color-texto-terciario)' }}>Sprint</div>
+                      <div style={{ fontWeight: 600 }}>Sprint {actividad.sprint || '-'}</div>
+                    </div>
+                    <div style={{ padding: '10px', backgroundColor: 'var(--color-fondo)', borderRadius: 'var(--radio-sm)' }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--color-texto-terciario)' }}>Q de Trabajo</div>
+                      <div style={{ fontWeight: 600 }}>Q{actividad.q_trabajo || '-'}</div>
+                    </div>
+                    <div style={{ padding: '10px', backgroundColor: 'var(--color-fondo)', borderRadius: 'var(--radio-sm)' }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--color-texto-terciario)' }}>Orden de Cambio (OC)</div>
+                      <div style={{ fontWeight: 600 }}>{actividad.orden_cambio || 'N/A'}</div>
+                    </div>
+
+                    {/* SRT Rational con Icono al lado */}
+                    <div style={{ padding: '10px', backgroundColor: 'var(--color-fondo)', borderRadius: 'var(--radio-sm)' }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--color-texto-terciario)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span>SRT Rational</span>
+                        {actividad.srt_rational && actividad.srt_rational.trim() && (
+                          <button
+                            type="button"
+                            onClick={() => setSrtParaEditarPase(actividad.srt_rational!.trim())}
+                            className="btn-icono-srt"
+                            title={`Editar Pase: ${actividad.srt_rational.trim()}`}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              background: 'var(--color-primario-suave, #EFF6FF)',
+                              color: 'var(--color-primario, #2563EB)',
+                              border: '1px solid var(--color-primario, #2563EB)',
+                              borderRadius: 'var(--radio-sm, 4px)',
+                              padding: '2px 8px',
+                              fontSize: '0.72rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease',
+                            }}
+                          >
+                            <Rocket size={12} />
+                            <span>Editar Pase</span>
+                          </button>
+                        )}
+                      </div>
+                      <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                        <span>{actividad.srt_rational || 'N/A'}</span>
+                        {actividad.srt_rational && actividad.srt_rational.trim() && (
+                          <button
+                            type="button"
+                            onClick={() => setSrtParaEditarPase(actividad.srt_rational!.trim())}
+                            title={`Abrir ventana Editar Pase: ${actividad.srt_rational.trim()}`}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              padding: '2px',
+                              color: 'var(--color-primario, #2563EB)',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center'
+                            }}
+                          >
+                            <Rocket size={16} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div style={{ padding: '10px', backgroundColor: 'var(--color-fondo)', borderRadius: 'var(--radio-sm)' }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--color-texto-terciario)' }}>Solicitado por</div>
+                      <div style={{ fontWeight: 600 }}>{actividad.solicitado_por || 'N/A'}</div>
+                    </div>
+                    <div style={{ padding: '10px', backgroundColor: 'var(--color-fondo)', borderRadius: 'var(--radio-sm)' }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--color-texto-terciario)' }}>Áreas Afectadas</div>
+                      <div style={{ fontWeight: 600 }}>{actividad.areas_afectadas || 'N/A'}</div>
+                    </div>
+                    <div style={{ padding: '10px', backgroundColor: 'var(--color-fondo)', borderRadius: 'var(--radio-sm)' }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--color-texto-terciario)' }}>Proyecto</div>
+                      <div style={{ fontWeight: 600, color: actividad.nombre_proyecto ? 'var(--color-primario)' : 'inherit' }}>
+                        {actividad.nombre_proyecto || 'N/A'}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
 
               {/* Historial de cambios de estado */}
               <div>
@@ -584,6 +923,20 @@ export const ModalDetalleActividad: React.FC<ModalDetalleActividadProps> = ({
         onConfirmar={confirmarEliminarActividad}
         onCerrar={() => setMostrarConfirmacionEliminar(false)}
       />
+
+      {/* Modal Editar Pase vinculado a la Actividad según SRT Rational */}
+      {srtParaEditarPase && (
+        <ModalEditarPase
+          abierto={!!srtParaEditarPase}
+          codigoSrt={srtParaEditarPase}
+          actividadEstado={actividad.estado}
+          onCerrar={() => setSrtParaEditarPase(null)}
+          onPaseActualizado={() => {
+            cargarDetalle();
+            onActualizado();
+          }}
+        />
+      )}
     </div>
   );
 };

@@ -289,6 +289,7 @@ export const ActividadesPage: React.FC = () => {
           onAbrirCambioEstado={act => setActividadParaCambioEstado(act)}
           onAbrirNuevaActividad={() => setMostrarModalNueva(true)}
           puedeCrear={puedeCrear}
+          onActualizar={cargarDatos}
         />
       )}
 

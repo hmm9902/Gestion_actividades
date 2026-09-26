@@ -10,6 +10,7 @@ from app.scripts.bootstrap import ensure_system_bootstrap
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Crear tablas en BD al iniciar si no existen usando el motor dinámico activo (TURSO o LOCAL)
+    import app.models.entities
     Base.metadata.create_all(bind=db_manager.engine)
     # Migración liviana para SQLite si ya existía la tabla ACTIVIDADES sin NOMBRE_PROYECTO
     try:
@@ -20,8 +21,25 @@ async def lifespan(app: FastAPI):
     except Exception:
         pass
     # Inicialización esencial del sistema (roles y usuario admin si no existen).
-    # NUNCA inserta ni sobreescribe actividades, grupos ni datos existentes en Turso o local.
     ensure_system_bootstrap()
+    # Inicialización del catálogo de pases desde Excel si la tabla está vacía
+    try:
+        from app.scripts.seed_pases import seed_pases_from_excel
+        seed_pases_from_excel()
+    except Exception as e:
+        print(f"Aviso: no se pudo sincronizar pases iniciales: {e}")
+    # Inicialización del catálogo de tickets desde Excel si la tabla está vacía
+    try:
+        from app.scripts.seed_tickets import seed_tickets_from_excel
+        seed_tickets_from_excel()
+    except Exception as e:
+        print(f"Aviso: no se pudo sincronizar tickets iniciales: {e}")
+    # Inicialización del catálogo de incidentes desde Excel si la tabla está vacía
+    try:
+        from app.scripts.seed_incidentes import seed_incidentes_from_excel
+        seed_incidentes_from_excel()
+    except Exception as e:
+        print(f"Aviso: no se pudo sincronizar incidentes iniciales: {e}")
     yield
 
 app = FastAPI(

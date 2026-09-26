@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users2, Plus, AlertCircle, ShieldAlert, Check, UserPlus, Trash2, Edit2, X, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
+import { Users2, Plus, AlertCircle, ShieldAlert, Check, UserPlus, Trash2, Edit2, UserCheck, X, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { Grupo, RegistroColaborador } from '../types';
 import { apiRequest } from '../lib/api';
 import { useAuth } from '../hooks/useAuth';
@@ -24,6 +24,23 @@ export const GruposPage: React.FC = () => {
   const [nombreGrupo, setNombreGrupo] = useState('');
   const [registroPrincipal, setRegistroPrincipal] = useState('');
   const [errorCrear, setErrorCrear] = useState<string | null>(null);
+
+  // Modal Editar Grupo (Modificar Código, Título y Líder)
+  const [grupoParaEditar, setGrupoParaEditar] = useState<Grupo | null>(null);
+  const [nuevoCodigoGrupo, setNuevoCodigoGrupo] = useState('');
+  const [nuevoNombreGrupo, setNuevoNombreGrupo] = useState('');
+  const [nuevoRegistroPrincipal, setNuevoRegistroPrincipal] = useState('');
+  const [guardandoEdicion, setGuardandoEdicion] = useState(false);
+  const [errorEditar, setErrorEditar] = useState<string | null>(null);
+
+  // Modal Confirmación Cambiar Líder Directo
+  const [confirmacionCambiarLider, setConfirmacionCambiarLider] = useState<{
+    codigoGrupo: string;
+    nuevoLiderRegistro: string;
+    nuevoLiderNombre: string;
+    liderAnteriorNombre: string;
+  } | null>(null);
+  const [cambiandoLider, setCambiandoLider] = useState(false);
 
   // Modal Miembros
   const [grupoSeleccionado, setGrupoSeleccionado] = useState<Grupo | null>(null);
@@ -78,6 +95,76 @@ export const GruposPage: React.FC = () => {
     } catch (err: any) {
       setErrorCrear(err.message || 'Error al crear el grupo');
       notifyError(err.message || 'Error al crear el grupo');
+    }
+  };
+
+  const abrirModalEditar = (g: Grupo) => {
+    setGrupoParaEditar(g);
+    setNuevoCodigoGrupo(g.codigo_grupo);
+    setNuevoNombreGrupo(g.nombre_grupo);
+    setNuevoRegistroPrincipal(g.registro_principal);
+    setErrorEditar(null);
+  };
+
+  const handleActualizarGrupo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!grupoParaEditar) return;
+    const codNormalizado = nuevoCodigoGrupo.trim().toUpperCase();
+    if (!codNormalizado) {
+      setErrorEditar('El código del grupo es obligatorio.');
+      return;
+    }
+    if (!nuevoNombreGrupo.trim()) {
+      setErrorEditar('El título o nombre del grupo es obligatorio.');
+      return;
+    }
+    if (!nuevoRegistroPrincipal) {
+      setErrorEditar('Debe seleccionar un Líder Principal (SWE) obligatorio.');
+      return;
+    }
+
+    try {
+      setGuardandoEdicion(true);
+      setErrorEditar(null);
+      await apiRequest(`/grupos/${grupoParaEditar.codigo_grupo}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          codigo_grupo: codNormalizado,
+          nombre_grupo: nuevoNombreGrupo.trim(),
+          registro_principal: nuevoRegistroPrincipal,
+        }),
+      });
+      const cambioCodigo = codNormalizado !== grupoParaEditar.codigo_grupo;
+      const cambioLider = nuevoRegistroPrincipal !== grupoParaEditar.registro_principal;
+      exito(`Grupo "${codNormalizado}" actualizado exitosamente${cambioCodigo ? ' (código modificado)' : ''}${cambioLider ? ' (nuevo líder único asignado)' : ''}.`);
+      setGrupoParaEditar(null);
+      cargarDatos();
+    } catch (err: any) {
+      setErrorEditar(err.message || 'Error al actualizar el grupo');
+      notifyError(err.message || 'Error al actualizar el grupo');
+    } finally {
+      setGuardandoEdicion(false);
+    }
+  };
+
+  const ejecutarCambioLider = async () => {
+    if (!confirmacionCambiarLider) return;
+    try {
+      setCambiandoLider(true);
+      const grupoActualizado = await apiRequest<Grupo>(`/grupos/${confirmacionCambiarLider.codigoGrupo}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          registro_principal: confirmacionCambiarLider.nuevoLiderRegistro,
+        }),
+      });
+      exito(`Líder del grupo ${confirmacionCambiarLider.codigoGrupo} cambiado a "${confirmacionCambiarLider.nuevoLiderNombre}". Solo hay 1 líder activo en el grupo.`);
+      setConfirmacionCambiarLider(null);
+      setGrupoSeleccionado(grupoActualizado);
+      cargarDatos();
+    } catch (err: any) {
+      notifyError(err.message || 'Error al cambiar líder de grupo');
+    } finally {
+      setCambiandoLider(false);
     }
   };
 
@@ -237,19 +324,52 @@ export const GruposPage: React.FC = () => {
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                   <div>
-                    <span style={{
-                      fontSize: '0.75rem',
-                      fontWeight: 700,
-                      color: 'var(--color-primario)',
-                      backgroundColor: 'var(--color-primario-suave)',
-                      padding: '2px 8px',
-                      borderRadius: 'var(--radio-sm)',
-                    }}>
+                    <span
+                      style={{
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        color: 'var(--color-primario)',
+                        backgroundColor: 'var(--color-primario-suave)',
+                        padding: '2px 8px',
+                        borderRadius: 'var(--radio-sm)',
+                        cursor: puedeEditar ? 'pointer' : 'default',
+                      }}
+                      onClick={() => puedeEditar && abrirModalEditar(g)}
+                      title={puedeEditar ? 'Clic para editar código, título o líder' : undefined}
+                    >
                       {g.codigo_grupo}
                     </span>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--color-texto-principal)', marginTop: '6px' }}>
-                      {g.nombre_grupo}
-                    </h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
+                      <h3
+                        style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--color-texto-principal)', margin: 0, cursor: puedeEditar ? 'pointer' : 'default' }}
+                        onClick={() => puedeEditar && abrirModalEditar(g)}
+                        title={puedeEditar ? 'Clic para modificar título' : undefined}
+                      >
+                        {g.nombre_grupo}
+                      </h3>
+                      {puedeEditar && (
+                        <button
+                          type="button"
+                          onClick={() => abrirModalEditar(g)}
+                          title="Modificar título del grupo"
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            padding: '3px',
+                            color: 'var(--color-texto-terciario)',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            borderRadius: 'var(--radio-sm)',
+                            transition: 'color 0.15s ease',
+                          }}
+                          onMouseEnter={e => (e.currentTarget.style.color = 'var(--color-primario)')}
+                          onMouseLeave={e => (e.currentTarget.style.color = 'var(--color-texto-terciario)')}
+                        >
+                          <Edit2 size={15} />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <span style={{
@@ -265,7 +385,19 @@ export const GruposPage: React.FC = () => {
                 </div>
 
                 <div style={{ fontSize: '0.85rem', color: 'var(--color-texto-secundario)', margin: '12px 0' }}>
-                  <div>Líder Principal: <strong>{g.nombre_principal || g.registro_principal}</strong> (SWE)</div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '4px' }}>
+                    <div>Líder Principal: <strong>{g.nombre_principal || g.registro_principal}</strong></div>
+                    <span style={{
+                      fontSize: '0.7rem',
+                      fontWeight: 700,
+                      color: 'var(--color-primario)',
+                      backgroundColor: 'var(--color-primario-suave)',
+                      padding: '1px 6px',
+                      borderRadius: 'var(--radio-sm)',
+                    }}>
+                      Único Líder SWE
+                    </span>
+                  </div>
                   <div style={{ fontSize: '0.8rem', color: 'var(--color-texto-terciario)', marginTop: '4px' }}>
                     {g.total_miembros} colaboradores asignados activamente
                   </div>
@@ -282,14 +414,29 @@ export const GruposPage: React.FC = () => {
                 flexWrap: 'wrap',
                 gap: '8px',
               }}>
-                <button
-                  type="button"
-                  className="btn btn-secundario btn-sm"
-                  onClick={() => setGrupoSeleccionado(g)}
-                >
-                  <Users2 size={14} />
-                  Miembros ({g.total_miembros})
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <button
+                    type="button"
+                    className="btn btn-secundario btn-sm"
+                    onClick={() => setGrupoSeleccionado(g)}
+                  >
+                    <Users2 size={14} />
+                    Miembros ({g.total_miembros})
+                  </button>
+
+                  {puedeEditar && (
+                    <button
+                      type="button"
+                      className="btn btn-secundario btn-sm"
+                      onClick={() => abrirModalEditar(g)}
+                      title="Modificar código, título o cambiar líder del grupo"
+                      style={{ padding: '3px 8px' }}
+                    >
+                      <Edit2 size={13} style={{ marginRight: '4px' }} />
+                      Editar Grupo
+                    </button>
+                  )}
+                </div>
 
                 {puedeEditar && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -446,6 +593,122 @@ export const GruposPage: React.FC = () => {
         </div>
       )}
 
+      {/* Modal Modificar Grupo (Código, Título y Líder) */}
+      {grupoParaEditar && (
+        <div className="modal-overlay" onClick={() => !guardandoEdicion && setGrupoParaEditar(null)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '480px' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-borde)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ fontWeight: 700, margin: 0 }}>Modificar Grupo</h3>
+                <span style={{ fontSize: '0.8rem', color: 'var(--color-primario)', fontWeight: 600 }}>
+                  Código actual: {grupoParaEditar.codigo_grupo}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setGrupoParaEditar(null)}
+                className="btn-cerrar-modal"
+                title="Cerrar ventana"
+                disabled={guardandoEdicion}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleActualizarGrupo} style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {errorEditar && (
+                <div style={{ backgroundColor: '#FEE2E2', border: '1px solid #FCA5A5', color: '#991B1B', padding: '10px', borderRadius: 'var(--radio-md)', fontSize: '0.85rem' }}>
+                  {errorEditar}
+                </div>
+              )}
+
+              <div>
+                <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>Código del Grupo *</span>
+                  <span style={{ fontSize: '0.725rem', color: 'var(--color-primario)', fontWeight: 600 }}>Identificador Único</span>
+                </label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="SQUAD-ALPHA"
+                  value={nuevoCodigoGrupo}
+                  onChange={e => setNuevoCodigoGrupo(e.target.value.toUpperCase())}
+                  maxLength={50}
+                  required
+                />
+                <span style={{ fontSize: '0.725rem', color: 'var(--color-texto-terciario)', marginTop: '4px', display: 'block' }}>
+                  * Solo debe existir un código a nivel de grupo (no se puede repetir). Si lo modifica, sus miembros y actividades se migrarán automáticamente al nuevo código.
+                </span>
+              </div>
+
+              <div>
+                <label className="form-label">Título / Nombre del Grupo *</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Ej: Squad Canales Digitales"
+                  value={nuevoNombreGrupo}
+                  onChange={e => setNuevoNombreGrupo(e.target.value)}
+                  maxLength={150}
+                  autoFocus
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>Líder Principal del Grupo *</span>
+                  <span style={{ fontSize: '0.725rem', color: 'var(--color-primario)', fontWeight: 600 }}>Solo 1 líder SWE</span>
+                </label>
+                <select
+                  className="form-select"
+                  value={nuevoRegistroPrincipal}
+                  onChange={e => setNuevoRegistroPrincipal(e.target.value)}
+                  required
+                >
+                  <option value="">-- Seleccionar SWE Líder --</option>
+                  {soloSWEs.map(s => (
+                    <option key={s.registro} value={s.registro}>
+                      {s.nombres} ({s.registro}) {s.registro === grupoParaEditar.registro_principal ? '★ (Líder Actual)' : '- Perfil SWE'}
+                    </option>
+                  ))}
+                </select>
+                <div style={{
+                  marginTop: '8px',
+                  padding: '8px 10px',
+                  backgroundColor: 'var(--color-primario-suave)',
+                  border: '1px solid var(--color-borde)',
+                  borderRadius: 'var(--radio-sm)',
+                  fontSize: '0.75rem',
+                  color: 'var(--color-texto-secundario)',
+                  lineHeight: '1.4'
+                }}>
+                  🛡️ <strong>Regla:</strong> Cada grupo cuenta con exactamente <strong>1 único líder principal</strong> (perfil SWE obligatorio). Al asignar un nuevo líder, el anterior pasa automáticamente a ser miembro colaborador regular del grupo.
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', paddingTop: '10px' }}>
+                <button
+                  type="button"
+                  className="btn btn-secundario"
+                  onClick={() => setGrupoParaEditar(null)}
+                  disabled={guardandoEdicion}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primario"
+                  disabled={guardandoEdicion || !nuevoNombreGrupo.trim() || !nuevoRegistroPrincipal}
+                >
+                  {guardandoEdicion ? 'Guardando...' : 'Guardar Cambios'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Modal Gestionar Miembros */}
       {grupoSeleccionado && (
         <div className="modal-overlay" onClick={() => setGrupoSeleccionado(null)}>
@@ -519,22 +782,52 @@ export const GruposPage: React.FC = () => {
                           <td style={{ padding: '8px 12px' }}>{m.registro}</td>
                           <td style={{ padding: '8px 12px' }}>{m.perfil}</td>
                           <td style={{ padding: '8px 12px', textAlign: 'center' }}>
-                            {puedeEditar && m.registro !== grupoSeleccionado.registro_principal && (
-                              <button
-                                type="button"
-                                onClick={() => setConfirmacionEliminar({
-                                  tipo: 'miembro',
-                                  registroMiembro: m.registro,
-                                  nombreMiembro: m.nombres || m.registro
-                                })}
-                                style={{ color: '#EF4444', cursor: 'pointer', padding: '4px' }}
-                                title="Remover del grupo"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            )}
-                            {m.registro === grupoSeleccionado.registro_principal && (
-                              <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--color-primario)' }}>LÍDER</span>
+                            {m.registro === grupoSeleccionado.registro_principal ? (
+                              <span style={{
+                                fontSize: '0.7rem',
+                                fontWeight: 700,
+                                color: 'var(--color-primario)',
+                                backgroundColor: 'var(--color-primario-suave)',
+                                padding: '3px 8px',
+                                borderRadius: 'var(--radio-sm)',
+                                display: 'inline-block',
+                              }}>
+                                ★ LÍDER ÚNICO
+                              </span>
+                            ) : (
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                                {puedeEditar && m.perfil === 'SWE' && (
+                                  <button
+                                    type="button"
+                                    className="btn btn-secundario btn-sm"
+                                    onClick={() => setConfirmacionCambiarLider({
+                                      codigoGrupo: grupoSeleccionado.codigo_grupo,
+                                      nuevoLiderRegistro: m.registro,
+                                      nuevoLiderNombre: m.nombres || m.registro,
+                                      liderAnteriorNombre: grupoSeleccionado.nombre_principal || grupoSeleccionado.registro_principal,
+                                    })}
+                                    style={{ fontSize: '0.725rem', padding: '2px 7px' }}
+                                    title="Designar como único líder del grupo"
+                                  >
+                                    <UserCheck size={13} style={{ marginRight: '3px' }} />
+                                    Hacer Líder
+                                  </button>
+                                )}
+                                {puedeEditar && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setConfirmacionEliminar({
+                                      tipo: 'miembro',
+                                      registroMiembro: m.registro,
+                                      nombreMiembro: m.nombres || m.registro
+                                    })}
+                                    style={{ color: '#EF4444', cursor: 'pointer', padding: '4px' }}
+                                    title="Remover del grupo"
+                                  >
+                                    <Trash2 size={16} />
+                                  </button>
+                                )}
+                              </div>
                             )}
                           </td>
                         </tr>
@@ -544,6 +837,67 @@ export const GruposPage: React.FC = () => {
                 </table>
               </div>
 
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Confirmación Cambiar Líder Directo */}
+      {confirmacionCambiarLider && (
+        <div className="modal-overlay" onClick={() => !cambiandoLider && setConfirmacionCambiarLider(null)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '460px' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-borde)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <UserCheck size={20} color="var(--color-primario)" />
+                Cambiar Líder del Grupo
+              </h3>
+              <button
+                type="button"
+                onClick={() => setConfirmacionCambiarLider(null)}
+                className="btn-cerrar-modal"
+                disabled={cambiandoLider}
+                title="Cerrar ventana"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--color-texto-principal)' }}>
+                ¿Está seguro de asignar a <strong>{confirmacionCambiarLider.nuevoLiderNombre}</strong> como nuevo <strong>Líder Principal</strong> del grupo <strong>{confirmacionCambiarLider.codigoGrupo}</strong>?
+              </p>
+
+              <div style={{
+                padding: '10px 12px',
+                backgroundColor: 'var(--color-primario-suave)',
+                border: '1px solid var(--color-borde)',
+                borderRadius: 'var(--radio-md)',
+                fontSize: '0.8rem',
+                color: 'var(--color-texto-secundario)',
+                lineHeight: 1.4
+              }}>
+                🛡️ <strong>Regla: Solo puede haber 1 único líder.</strong><br />
+                <strong>{confirmacionCambiarLider.liderAnteriorNombre}</strong> dejará de ser líder y permanecerá como miembro activo del equipo.
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', paddingTop: '10px' }}>
+                <button
+                  type="button"
+                  className="btn btn-secundario"
+                  onClick={() => setConfirmacionCambiarLider(null)}
+                  disabled={cambiandoLider}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primario"
+                  onClick={ejecutarCambioLider}
+                  disabled={cambiandoLider}
+                >
+                  {cambiandoLider ? 'Cambiando líder...' : 'Confirmar Nuevo Líder'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

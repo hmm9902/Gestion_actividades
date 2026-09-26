@@ -9,11 +9,15 @@ import { ActividadesPage } from './pages/ActividadesPage';
 import { GruposPage } from './pages/GruposPage';
 import { RegistrosPage } from './pages/RegistrosPage';
 import { ProyectosPage } from './pages/ProyectosPage';
+import { AplicacionesPage } from './pages/AplicacionesPage';
 import { UsuariosPage } from './pages/UsuariosPage';
 import { PerfilesPage } from './pages/PerfilesPage';
 import { ConfiguracionPage } from './pages/ConfiguracionPage';
 import { AuditoriaPage } from './pages/AuditoriaPage';
 import { SistemaBdPage } from './pages/SistemaBdPage';
+import { PasesPage } from './pages/PasesPage';
+import { TicketsPage } from './pages/TicketsPage';
+import { IncidentesPage } from './pages/IncidentesPage';
 
 export const App: React.FC = () => {
   return (
@@ -30,8 +34,12 @@ export const App: React.FC = () => {
                 <Route index element={<Navigate to="/actividades" replace />} />
                 <Route path="actividades" element={<ActividadesPage />} />
                 <Route path="grupos" element={<GruposPage />} />
+                <Route path="pases" element={<PasesPage />} />
+                <Route path="tickets" element={<TicketsPage />} />
+                <Route path="incidentes" element={<IncidentesPage />} />
                 <Route path="registros" element={<RegistrosPage />} />
                 <Route path="proyectos" element={<ProyectosPage />} />
+                <Route path="aplicaciones" element={<AplicacionesPage />} />
                 <Route path="usuarios" element={<UsuariosPage />} />
                 <Route path="perfiles" element={<PerfilesPage />} />
                 <Route path="configuracion" element={<ConfiguracionPage />} />
