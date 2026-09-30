@@ -153,11 +153,13 @@ export const TicketsPage: React.FC = () => {
     return Array.from(s).sort();
   }, [aplicaciones]);
 
-  // Lista de Nombres únicos de Proyectos
+  // Lista de Nombres únicos de Proyectos VISIBLES (evita sobrecarga en combos)
   const listaNombresProyectos = useMemo(() => {
     const s = new Set<string>();
     proyectos.forEach(p => {
-      if (p.nombre_proyecto?.trim()) s.add(p.nombre_proyecto.trim());
+      if (p.nombre_proyecto?.trim() && (p.visible || 'SI') === 'SI') {
+        s.add(p.nombre_proyecto.trim());
+      }
     });
     return Array.from(s).sort();
   }, [proyectos]);
@@ -1364,7 +1366,7 @@ export const TicketsPage: React.FC = () => {
                       style={{ width: '100%' }}
                     >
                       <option value="">Seleccione Proyecto...</option>
-                      {listaNombresProyectos.map(p => (
+                      {Array.from(new Set([...listaNombresProyectos, ...(editProyecto ? [editProyecto] : [])])).map(p => (
                         <option key={p} value={p}>{p}</option>
                       ))}
                     </select>

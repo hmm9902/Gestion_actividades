@@ -3,6 +3,7 @@ from typing import Optional, List, Any, Literal
 from pydantic import BaseModel, EmailStr, Field, ConfigDict, model_validator
 
 EstadoProyectoLiteral = Literal["Activo", "standBy", "Entregado"]
+VisibleLiteral = Literal["SI", "NO"]
 EstadoAplicacionLiteral = Literal["Activo", "Inactivo"]
 TipoAmbienteLiteral = Literal["A", "D", "H"]
 EstadoPaseLiteral = Literal[
@@ -167,6 +168,7 @@ class ProyectoCreate(BaseModel):
     posibles_impedimentos: Optional[str] = None
     fecha_dead_line: Optional[date] = None
     estado: EstadoProyectoLiteral = "Activo"
+    visible: VisibleLiteral = "SI"
 
 class ProyectoUpdate(BaseModel):
     nombre_proyecto: Optional[str] = None
@@ -176,6 +178,7 @@ class ProyectoUpdate(BaseModel):
     posibles_impedimentos: Optional[str] = None
     fecha_dead_line: Optional[date] = None
     estado: Optional[EstadoProyectoLiteral] = None
+    visible: Optional[VisibleLiteral] = None
 
 class ProyectoResponse(BaseModel):
     proyecto_id: int
@@ -186,6 +189,7 @@ class ProyectoResponse(BaseModel):
     fecha_dead_line: Optional[date] = None
     fecha_registro: datetime
     estado: str
+    visible: str = "SI"
 
     model_config = ConfigDict(from_attributes=True)
 

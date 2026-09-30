@@ -83,6 +83,7 @@ export interface Actividad {
 }
 
 export type EstadoProyecto = 'Activo' | 'standBy' | 'Entregado';
+export type VisibleProyecto = 'SI' | 'NO';
 
 export interface Proyecto {
   proyecto_id: number;
@@ -93,6 +94,7 @@ export interface Proyecto {
   posibles_impedimentos?: string | null;
   fecha_dead_line?: string | null;
   estado: EstadoProyecto;
+  visible?: VisibleProyecto;
   creado_por?: string | null;
   fecha_actualizacion?: string | null;
 }

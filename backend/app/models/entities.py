@@ -173,6 +173,7 @@ class Proyecto(Base):
     FECHA_DEAD_LINE = Column(Date, nullable=True)
     FECHA_REGISTRO = Column(DateTime, default=datetime.now, nullable=False)
     ESTADO = Column(String(20), nullable=False, default="Activo")
+    VISIBLE = Column(String(2), nullable=False, default="SI")
 
     proyecto_id = synonym("PROYECTO_ID")
     nombre_proyecto = synonym("NOMBRE_PROYECTO")
@@ -182,6 +183,7 @@ class Proyecto(Base):
     fecha_dead_line = synonym("FECHA_DEAD_LINE")
     fecha_registro = synonym("FECHA_REGISTRO")
     estado = synonym("ESTADO")
+    visible = synonym("VISIBLE")
 
 class Aplicacion(Base):
     __tablename__ = "APLICACIONES"

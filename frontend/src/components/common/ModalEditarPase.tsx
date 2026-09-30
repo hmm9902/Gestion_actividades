@@ -519,7 +519,7 @@ export const ModalEditarPase: React.FC<ModalEditarPaseProps> = ({
                       onChange={e => setFormProyecto(e.target.value)}
                     >
                       <option value="">-- Seleccione Proyecto --</option>
-                      {listaProyectos.map(p => (
+                      {listaProyectos.filter(p => (p.visible || 'SI') === 'SI' || p.nombre_proyecto === formProyecto).map(p => (
                         <option key={p.proyecto_id} value={p.nombre_proyecto}>
                           {p.nombre_proyecto}
                         </option>

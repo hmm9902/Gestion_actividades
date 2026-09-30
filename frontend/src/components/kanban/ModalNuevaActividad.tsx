@@ -57,8 +57,8 @@ export const ModalNuevaActividad: React.FC<ModalNuevaActividadProps> = ({
 
     const cargarProyectos = async () => {
       try {
-        const pData = await apiRequest<Proyecto[]>('/proyectos');
-        setProyectos(pData.filter(p => p.estado !== 'Entregado'));
+        const pData = await apiRequest<Proyecto[]>('/proyectos?visible=SI');
+        setProyectos(pData.filter(p => p.estado !== 'Entregado' && (p.visible || 'SI') === 'SI'));
       } catch (e) {
         console.error(e);
       }

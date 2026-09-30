@@ -129,6 +129,7 @@ export const ModalExportarProyectos: React.FC<ModalExportarProyectosProps> = ({
         'ID Proyecto': p.proyecto_id,
         'Nombre del Proyecto': p.nombre_proyecto,
         'Estado': p.estado,
+        'Visible': p.visible || 'SI',
         'Equipo Solicitante': p.equipo_solicitante || '',
         'Fecha de Registro': formatearFechaExcel(p.fecha_registro),
         'Fecha Dead Line': formatearFechaExcel(p.fecha_dead_line),
@@ -146,6 +147,7 @@ export const ModalExportarProyectos: React.FC<ModalExportarProyectosProps> = ({
         { wch: 14 }, // ID Proyecto
         { wch: 40 }, // Nombre del Proyecto
         { wch: 16 }, // Estado
+        { wch: 10 }, // Visible
         { wch: 25 }, // Equipo Solicitante
         { wch: 20 }, // Fecha de Registro
         { wch: 20 }, // Fecha Dead Line

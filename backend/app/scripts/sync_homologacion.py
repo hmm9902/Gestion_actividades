@@ -27,6 +27,13 @@ def homologar():
         Base.metadata.create_all(bind=engine)
         engine.dispose()
 
+        conn = sqlite3.connect(p)
+        cols = [c[1] for c in conn.execute("PRAGMA table_info('PROYECTOS')").fetchall()]
+        if 'VISIBLE' not in cols:
+            conn.execute("ALTER TABLE PROYECTOS ADD COLUMN VISIBLE VARCHAR(2) NOT NULL DEFAULT 'SI'")
+            conn.commit()
+        conn.close()
+
     # Copiar datos actualizados de backend a root
     if os.path.exists(backend_db):
         try:

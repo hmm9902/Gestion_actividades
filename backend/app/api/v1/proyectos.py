@@ -13,11 +13,12 @@ router = APIRouter()
 def listar_proyectos(
     search: Optional[str] = None,
     estado: Optional[str] = None,
+    visible: Optional[str] = None,
     current_user: dict = Depends(get_current_user_and_registro),
     db: Session = Depends(get_db)
 ):
     repo = ProyectoRepository(db)
-    return repo.list_proyectos(search=search, estado=estado)
+    return repo.list_proyectos(search=search, estado=estado, visible=visible)
 
 @router.get("/{proyecto_id}", response_model=ProyectoResponse)
 def obtener_proyecto(

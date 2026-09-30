@@ -1,7 +1,8 @@
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from app.core.config import settings
 from app.db.session import db_manager, Base
 from app.api.v1 import api_router
@@ -17,6 +18,14 @@ async def lifespan(app: FastAPI):
         from sqlalchemy import text
         with db_manager.engine.connect() as conn:
             conn.execute(text("ALTER TABLE ACTIVIDADES ADD COLUMN NOMBRE_PROYECTO VARCHAR(150)"))
+            conn.commit()
+    except Exception:
+        pass
+    # Migración liviana para PROYECTOS si ya existía sin columna VISIBLE
+    try:
+        from sqlalchemy import text
+        with db_manager.engine.connect() as conn:
+            conn.execute(text("ALTER TABLE PROYECTOS ADD COLUMN VISIBLE VARCHAR(2) DEFAULT 'SI'"))
             conn.commit()
     except Exception:
         pass
@@ -92,8 +101,70 @@ def root():
         "app": settings.APP_NAME,
         "status": "online",
         "docs": "/docs",
-        "health": "/health"
+        "health": "/health",
+        "descarga_directa_pdf": "/descargas/Documento_Nora.pdf",
+        "ver_online_pdf": "/ver/Documento_Nora.pdf"
     }
+
+# Rutas de descarga directa y visualización para Documento_Nora.pdf
+@app.get("/descargas/Documento_Nora.pdf", tags=["Descargas"])
+@app.get("/Documento_Nora.pdf", tags=["Descargas"])
+@app.get("/api/descargas/Documento_Nora.pdf", tags=["Descargas"])
+def descargar_documento_nora():
+    """
+    Descarga directa del archivo PDF Documento_Nora.pdf.
+    Fuerza la descarga en el navegador con encabezado Content-Disposition: attachment.
+    """
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    static_file = os.path.join(base_dir, "static", "Documento_Nora.pdf")
+    root_file = os.path.join(os.path.dirname(base_dir), "Documento_Nora.pdf")
+    
+    file_path = static_file if os.path.exists(static_file) else root_file
+    if not os.path.exists(file_path):
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"detail": "Archivo Documento_Nora.pdf no encontrado en el servidor."}
+        )
+    
+    return FileResponse(
+        path=file_path,
+        filename="Documento_Nora.pdf",
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": 'attachment; filename="Documento_Nora.pdf"',
+            "Cache-Control": "public, max-age=86400",
+            "Access-Control-Allow-Origin": "*",
+        }
+    )
+
+@app.get("/ver/Documento_Nora.pdf", tags=["Descargas"])
+@app.get("/api/ver/Documento_Nora.pdf", tags=["Descargas"])
+def ver_documento_nora():
+    """
+    Visualización directa (inline) en el navegador del archivo PDF Documento_Nora.pdf.
+    """
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    static_file = os.path.join(base_dir, "static", "Documento_Nora.pdf")
+    root_file = os.path.join(os.path.dirname(base_dir), "Documento_Nora.pdf")
+    
+    file_path = static_file if os.path.exists(static_file) else root_file
+    if not os.path.exists(file_path):
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"detail": "Archivo Documento_Nora.pdf no encontrado en el servidor."}
+        )
+    
+    return FileResponse(
+        path=file_path,
+        filename="Documento_Nora.pdf",
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": 'inline; filename="Documento_Nora.pdf"',
+            "Cache-Control": "public, max-age=86400",
+            "Access-Control-Allow-Origin": "*",
+        }
+    )
 
 # Incluir rutas de API
 app.include_router(api_router, prefix="/api")
+

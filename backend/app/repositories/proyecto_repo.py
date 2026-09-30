@@ -19,11 +19,14 @@ class ProyectoRepository:
     def list_proyectos(
         self,
         search: Optional[str] = None,
-        estado: Optional[str] = None
+        estado: Optional[str] = None,
+        visible: Optional[str] = None
     ) -> List[Proyecto]:
         query = self.db.query(Proyecto)
         if estado:
             query = query.filter(Proyecto.ESTADO.ilike(estado.strip()))
+        if visible:
+            query = query.filter(Proyecto.VISIBLE.ilike(visible.strip()))
         if search:
             s = f"%{search.strip()}%"
             query = query.filter(
@@ -46,6 +49,12 @@ class ProyectoRepository:
             except ValueError:
                 fecha_reg = datetime.now()
 
+        visible_val = data.get("visible", "SI")
+        if isinstance(visible_val, str):
+            visible_val = visible_val.strip().upper()
+        if visible_val not in ("SI", "NO"):
+            visible_val = "SI"
+
         proyecto = Proyecto(
             NOMBRE_PROYECTO=data["nombre_proyecto"].strip(),
             DESCRIPCION_PROYECTO=data.get("descripcion_proyecto"),
@@ -53,7 +62,8 @@ class ProyectoRepository:
             POSIBLES_IMPEDIMENTOS=data.get("posibles_impedimentos"),
             FECHA_DEAD_LINE=data.get("fecha_dead_line"),
             FECHA_REGISTRO=fecha_reg,
-            ESTADO=data.get("estado", "Activo")
+            ESTADO=data.get("estado", "Activo"),
+            VISIBLE=visible_val
         )
         self.db.add(proyecto)
         self.db.commit()
@@ -68,13 +78,16 @@ class ProyectoRepository:
             "fecha_registro": "FECHA_REGISTRO",
             "posibles_impedimentos": "POSIBLES_IMPEDIMENTOS",
             "fecha_dead_line": "FECHA_DEAD_LINE",
-            "estado": "ESTADO"
+            "estado": "ESTADO",
+            "visible": "VISIBLE"
         }
         for k, v in data.items():
             col_name = mapping.get(k)
             if col_name and v is not None:
                 if isinstance(v, str):
                     v = v.strip()
+                    if col_name == "VISIBLE":
+                        v = v.upper()
                 setattr(proyecto, col_name, v)
         self.db.commit()
         self.db.refresh(proyecto)

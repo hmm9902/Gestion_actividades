@@ -129,3 +129,77 @@ def test_proyecto_estado_validation(client: TestClient, swe_token: str):
         assert good_res.status_code in [201, 400]
         if good_res.status_code == 201:
             assert good_res.json()["estado"] == valid_estado
+
+def test_proyecto_visible_creation_and_filtering(client: TestClient, swe_token: str):
+    # 1. Crear proyecto visible por defecto (SI)
+    res_si = client.post(
+        "/api/proyectos",
+        headers={"Authorization": f"Bearer {swe_token}"},
+        json={
+            "nombre_proyecto": "PROYECTO VISIBLE SI TEST",
+            "equipo_solicitante": "TRIBU VISIBLE",
+            "visible": "SI"
+        }
+    )
+    assert res_si.status_code == 201
+    data_si = res_si.json()
+    assert data_si["visible"] == "SI"
+    proy_si_id = data_si["proyecto_id"]
+
+    # 2. Crear proyecto con visible = NO
+    res_no = client.post(
+        "/api/proyectos",
+        headers={"Authorization": f"Bearer {swe_token}"},
+        json={
+            "nombre_proyecto": "PROYECTO OCULTO NO TEST",
+            "equipo_solicitante": "TRIBU OCULTA",
+            "visible": "NO"
+        }
+    )
+    assert res_no.status_code == 201
+    data_no = res_no.json()
+    assert data_no["visible"] == "NO"
+    proy_no_id = data_no["proyecto_id"]
+
+    # 3. Validar filtro visible=SI
+    list_si = client.get(
+        "/api/proyectos?visible=SI",
+        headers={"Authorization": f"Bearer {swe_token}"}
+    )
+    assert list_si.status_code == 200
+    nombres_si = [p["nombre_proyecto"] for p in list_si.json()]
+    assert "PROYECTO VISIBLE SI TEST" in nombres_si
+    assert "PROYECTO OCULTO NO TEST" not in nombres_si
+
+    # 4. Validar filtro visible=NO
+    list_no = client.get(
+        "/api/proyectos?visible=NO",
+        headers={"Authorization": f"Bearer {swe_token}"}
+    )
+    assert list_no.status_code == 200
+    nombres_no = [p["nombre_proyecto"] for p in list_no.json()]
+    assert "PROYECTO OCULTO NO TEST" in nombres_no
+    assert "PROYECTO VISIBLE SI TEST" not in nombres_no
+
+    # 5. Modificar proyecto de SI a NO en "Editar Proyecto"
+    update_res = client.put(
+        f"/api/proyectos/{proy_si_id}",
+        headers={"Authorization": f"Bearer {swe_token}"},
+        json={
+            "visible": "NO"
+        }
+    )
+    assert update_res.status_code == 200
+    assert update_res.json()["visible"] == "NO"
+
+    # 6. Validar que valores inválidos para visible sean rechazados (422)
+    bad_visible = client.post(
+        "/api/proyectos",
+        headers={"Authorization": f"Bearer {swe_token}"},
+        json={
+            "nombre_proyecto": "PROYECTO INVALIDO VISIBLE",
+            "equipo_solicitante": "TRIBU INVALIDA",
+            "visible": "TAL_VEZ"
+        }
+    )
+    assert bad_visible.status_code == 422

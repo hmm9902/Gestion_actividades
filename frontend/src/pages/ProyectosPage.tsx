@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FolderKanban, Plus, Search, AlertCircle, Edit2, X, Trash2, ChevronLeft, ChevronRight, RefreshCw, Calendar, Users, FileText, AlertTriangle } from 'lucide-react';
-import { Proyecto, EstadoProyecto } from '../types';
+import { Proyecto, EstadoProyecto, VisibleProyecto } from '../types';
 import { apiRequest } from '../lib/api';
 import { useAuth } from '../hooks/useAuth';
 import { useNotificacion } from '../context/NotificacionContext';
@@ -23,6 +23,7 @@ export const ProyectosPage: React.FC = () => {
   const [filtroCabeceraNombre, setFiltroCabeceraNombre] = useState('');
   const [filtroCabeceraEquipo, setFiltroCabeceraEquipo] = useState('');
   const [filtroCabeceraEstado, setFiltroCabeceraEstado] = useState('');
+  const [filtroCabeceraVisible, setFiltroCabeceraVisible] = useState('');
 
   // Paginación 10 en 10
   const [paginaActual, setPaginaActual] = useState(1);
@@ -37,6 +38,7 @@ export const ProyectosPage: React.FC = () => {
   const [posiblesImpedimentos, setPosiblesImpedimentos] = useState('');
   const [fechaDeadLine, setFechaDeadLine] = useState('');
   const [estadoCrear, setEstadoCrear] = useState<EstadoProyecto>('Activo');
+  const [visibleCrear, setVisibleCrear] = useState<VisibleProyecto>('SI');
   const [errorCrear, setErrorCrear] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
 
@@ -50,6 +52,7 @@ export const ProyectosPage: React.FC = () => {
   const [editPosiblesImpedimentos, setEditPosiblesImpedimentos] = useState('');
   const [editFechaDeadLine, setEditFechaDeadLine] = useState('');
   const [editEstado, setEditEstado] = useState<EstadoProyecto>('Activo');
+  const [editVisible, setEditVisible] = useState<VisibleProyecto>('SI');
   const [errorEditar, setErrorEditar] = useState<string | null>(null);
   const [guardandoEditar, setGuardandoEditar] = useState(false);
 
@@ -98,6 +101,7 @@ export const ProyectosPage: React.FC = () => {
     setEditPosiblesImpedimentos(p.posibles_impedimentos || '');
     setEditFechaDeadLine(p.fecha_dead_line ? p.fecha_dead_line.split('T')[0] : '');
     setEditEstado(p.estado || 'Activo');
+    setEditVisible((p.visible as VisibleProyecto) || 'SI');
     setErrorEditar(null);
     setMostrarModalEditar(true);
   };
@@ -122,6 +126,7 @@ export const ProyectosPage: React.FC = () => {
           posibles_impedimentos: posiblesImpedimentos.trim() || null,
           fecha_dead_line: fechaDeadLine.trim() || null,
           estado: estadoCrear,
+          visible: visibleCrear,
         }),
       });
 
@@ -134,6 +139,7 @@ export const ProyectosPage: React.FC = () => {
       setPosiblesImpedimentos('');
       setFechaDeadLine('');
       setEstadoCrear('Activo');
+      setVisibleCrear('SI');
       cargarProyectos();
     } catch (err: any) {
       const msg = err.message || 'Error al grabar el proyecto';
@@ -165,6 +171,7 @@ export const ProyectosPage: React.FC = () => {
         posibles_impedimentos: editPosiblesImpedimentos.trim() || null,
         fecha_dead_line: editFechaDeadLine.trim() || null,
         estado: editEstado,
+        visible: editVisible,
       };
 
       await apiRequest(`/proyectos/${proyectoSeleccionado.proyecto_id}`, {
@@ -215,6 +222,9 @@ export const ProyectosPage: React.FC = () => {
       return false;
     }
     if (filtroCabeceraEstado && p.estado !== filtroCabeceraEstado) {
+      return false;
+    }
+    if (filtroCabeceraVisible && (p.visible || 'SI') !== filtroCabeceraVisible) {
       return false;
     }
     return true;
@@ -419,6 +429,22 @@ export const ProyectosPage: React.FC = () => {
                     <option value="Entregado">Entregado</option>
                   </select>
                 </th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', minWidth: '105px' }}>
+                  <div style={{ marginBottom: '6px' }}>Visible</div>
+                  <select
+                    className="form-select"
+                    style={{ fontSize: '0.75rem', padding: '2px 6px', height: '28px', width: '100%', fontWeight: 'normal' }}
+                    value={filtroCabeceraVisible}
+                    onChange={e => {
+                      setFiltroCabeceraVisible(e.target.value);
+                      setPaginaActual(1);
+                    }}
+                  >
+                    <option value="">Todos</option>
+                    <option value="SI">SI</option>
+                    <option value="NO">NO</option>
+                  </select>
+                </th>
                 <th style={{ padding: '12px 16px', textAlign: 'center', width: '110px', verticalAlign: 'bottom' }}>
                   Acciones
                 </th>
@@ -427,13 +453,13 @@ export const ProyectosPage: React.FC = () => {
             <tbody>
               {cargando ? (
                 <tr>
-                  <td colSpan={8} style={{ padding: '30px', textAlign: 'center', color: 'var(--color-texto-terciario)' }}>
+                  <td colSpan={9} style={{ padding: '30px', textAlign: 'center', color: 'var(--color-texto-terciario)' }}>
                     Cargando proyectos...
                   </td>
                 </tr>
               ) : proyectosPaginados.length === 0 ? (
                 <tr>
-                  <td colSpan={8} style={{ padding: '30px', textAlign: 'center', color: 'var(--color-texto-terciario)' }}>
+                  <td colSpan={9} style={{ padding: '30px', textAlign: 'center', color: 'var(--color-texto-terciario)' }}>
                     No se encontraron proyectos registrados.
                   </td>
                 </tr>
@@ -488,6 +514,27 @@ export const ProyectosPage: React.FC = () => {
                           p.estado === 'Entregado' ? '#15803D' : '#64748B',
                       }}>
                         {p.estado}
+                      </span>
+                    </td>
+                    <td style={{ padding: '12px 16px' }}>
+                      <span style={{
+                        padding: '2px 10px',
+                        borderRadius: 'var(--radio-pildora)',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        backgroundColor: (p.visible || 'SI') === 'SI' ? '#DCFCE7' : '#FEE2E2',
+                        color: (p.visible || 'SI') === 'SI' ? '#15803D' : '#991B1B',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px'
+                      }}>
+                        <span style={{
+                          width: '6px',
+                          height: '6px',
+                          borderRadius: '50%',
+                          backgroundColor: (p.visible || 'SI') === 'SI' ? '#16A34A' : '#DC2626'
+                        }}></span>
+                        {p.visible || 'SI'}
                       </span>
                     </td>
                     <td style={{ padding: '12px 16px', textAlign: 'center' }}>
@@ -629,7 +676,7 @@ export const ProyectosPage: React.FC = () => {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px' }}>
                 <div>
                   <label className="form-label">Fecha de Registro</label>
                   <input
@@ -659,6 +706,19 @@ export const ProyectosPage: React.FC = () => {
                     <option value="Activo">Activo</option>
                     <option value="standBy">standBy</option>
                     <option value="Entregado">Entregado</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label">VISIBLE *</label>
+                  <select
+                    className="form-select"
+                    value={visibleCrear}
+                    onChange={e => setVisibleCrear(e.target.value as VisibleProyecto)}
+                    required
+                    style={{ fontWeight: 600 }}
+                  >
+                    <option value="SI">SI</option>
+                    <option value="NO">NO</option>
                   </select>
                 </div>
               </div>
@@ -792,7 +852,7 @@ export const ProyectosPage: React.FC = () => {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px' }}>
                 <div>
                   <label className="form-label">Fecha de Registro</label>
                   <input
@@ -824,6 +884,47 @@ export const ProyectosPage: React.FC = () => {
                     <option value="Entregado">Entregado</option>
                   </select>
                 </div>
+                <div>
+                  <label className="form-label" style={{ fontWeight: 700, color: editVisible === 'NO' ? '#DC2626' : 'inherit' }}>
+                    VISIBLE *
+                  </label>
+                  <select
+                    className="form-select"
+                    value={editVisible}
+                    onChange={e => setEditVisible(e.target.value as VisibleProyecto)}
+                    required
+                    style={{
+                      borderColor: editVisible === 'NO' ? '#F87171' : undefined,
+                      backgroundColor: editVisible === 'NO' ? '#FEF2F2' : undefined,
+                      fontWeight: 700,
+                    }}
+                  >
+                    <option value="SI">SI</option>
+                    <option value="NO">NO</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Alerta explicativa de visibilidad en combos */}
+              <div style={{
+                fontSize: '0.8rem',
+                borderRadius: 'var(--radio-md)',
+                padding: '10px 14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                backgroundColor: editVisible === 'NO' ? '#FEF3C7' : '#F0FDF4',
+                border: editVisible === 'NO' ? '1px solid #FCD34D' : '1px solid #BBF7D0',
+                color: editVisible === 'NO' ? '#92400E' : '#166534',
+              }}>
+                <AlertCircle size={18} style={{ flexShrink: 0 }} />
+                <span>
+                  {editVisible === 'NO' ? (
+                    <><strong>VISIBLE = NO:</strong> Este proyecto ya no será visible ni elegible en los combos de las demás pantallas para evitar sobrecarga.</>
+                  ) : (
+                    <><strong>VISIBLE = SI:</strong> El proyecto está activo y visible para ser seleccionado en las demás pantallas del sistema.</>
+                  )}
+                </span>
               </div>
 
               <div>

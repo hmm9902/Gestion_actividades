@@ -243,7 +243,8 @@ export const PasesPage: React.FC = () => {
   const handleAbrirCrear = () => {
     setErrorFormulario(null);
     setFormTipoAmbiente('D');
-    setFormProyecto(listaProyectos[0]?.nombre_proyecto || '');
+    const primerVisible = listaProyectos.find(p => (p.visible || 'SI') === 'SI');
+    setFormProyecto(primerVisible?.nombre_proyecto || '');
     setFormApp(listaAplicaciones[0]?.siglas || '');
     setFormFechaRegistroSrt(new Date().toISOString().split('T')[0]);
     setFormFechaSolicitadoUat('');
@@ -727,7 +728,7 @@ export const PasesPage: React.FC = () => {
               }}
             >
               <option value="">Todos los proyectos</option>
-              {listaProyectos.map(p => (
+              {listaProyectos.filter(p => (p.visible || 'SI') === 'SI' || p.nombre_proyecto === filtroProyecto).map(p => (
                 <option key={p.proyecto_id} value={p.nombre_proyecto}>
                   {p.nombre_proyecto}
                 </option>
@@ -1393,7 +1394,7 @@ export const PasesPage: React.FC = () => {
                         onChange={e => setFormProyecto(e.target.value)}
                       >
                         <option value="">-- Seleccione Proyecto --</option>
-                        {listaProyectos.map(p => (
+                        {listaProyectos.filter(p => (p.visible || 'SI') === 'SI' || p.nombre_proyecto === formProyecto).map(p => (
                           <option key={p.proyecto_id} value={p.nombre_proyecto}>
                             {p.nombre_proyecto}
                           </option>
